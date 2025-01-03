@@ -104,6 +104,9 @@ export interface IConfig {
   dartZoom: {
     enabled: boolean;
   };
+  training: {
+    enabled: boolean;
+  };
 }
 
 export interface IGlobalStatus {
@@ -219,6 +222,9 @@ export const defaultConfig: IConfig = {
     enabled: false,
   },
   dartZoom: {
+    enabled: false,
+  },
+  training: {
     enabled: false,
   },
 };
