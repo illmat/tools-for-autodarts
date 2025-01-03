@@ -1137,6 +1137,80 @@
               </div>
             </div>
           </div>
+
+          <div class="col-span-1 space-y-4 rounded border border-white/10 p-4 md:col-span-2">
+            <div>
+              <h2 class="text-lg font-semibold">
+                Trainings
+              </h2>
+              <p class="max-w-2xl text-white/40">
+                Configure your training settings.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
+              <AppToggle v-model="config.training.enabled" />
+            </div>
+
+            <template v-if="config.training.enabled && trainingsConfig">
+              <div v-for="(training, trainingsIndex) in trainingsConfig.trainings" :key="trainingsIndex" class="grid items-center gap-4 lg:grid-cols-[6rem_2fr] lg:grid-rows-1">
+                <div>Training {{ trainingsIndex + 1 }}</div>
+                <div class="grid items-center gap-4 lg:grid-cols-[2fr_50px_50px] lg:grid-rows-2">
+                  <input
+                    v-model="trainingsConfig.trainings[trainingsIndex].name"
+                    type="text"
+                    placeholder="Name"
+                    class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
+                  >
+                  <ConfigDropDownButton @select="(variant) => onAddTraining(trainingsIndex, variant)" icon="plus" :items="AutodartsVariants" />
+
+                  <!-- <button
+                    @click="trainingsConfig.trainings[trainingsIndex].games.push({ variant: 'Shanghai', mode: '1-7' })"
+                    class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
+                  >
+                    <span class="icon-[mdi-light--plus] text-lg" />
+                  </button> -->
+                  <button
+                    @click="trainingsConfig.trainings.splice(trainingsIndex, 1)"
+                    class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
+                  >
+                    <span class="icon-[mdi-light--delete] text-lg" />
+                  </button>
+                  <div>
+                    <template v-for="(__, gamesIndex) in trainingsConfig.trainings[trainingsIndex].games">
+                      <div v-if="__.variant === 'Shanghai'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[100px_100px_1fr_50px_50px]">
+                        <div>{{ __.variant }}</div>
+                        <select id="example" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <option v-for="shanghaiMode in ShanghaiModes" :key="shanghaiMode">
+                            {{ shanghaiMode }}
+                          </option>
+                        </select>
+                        <div />
+                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--arrow-up] text-lg" />
+                        </button>
+                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--arrow-down] text-lg" />
+                        </button>
+                      </div>
+                      <!-- {{ JSON.stringify(trainingsConfig.trainings[index].games[gamesIndex]) }} -->
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid items-center gap-4 lg:grid-cols-[5rem_2fr_5fr_1fr_1fr_50px_50px] lg:grid-rows-1">
+                <button
+                  @click="trainingsConfig.trainings.push({ name: '', games: [] })"
+                  class="flex flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 p-2 outline-none"
+                >
+                  <span class="icon-[mdi-light--plus]" />
+                </button>
+                <div />
+              </div>
+              {{ JSON.stringify(trainingsConfig) }}
+            </template>
+          </div>
         </div>
       </template>
     </div>
@@ -1150,14 +1224,18 @@ import type { IConfig } from "@/utils/storage";
 import type { ICallerConfig } from "@/utils/callerStorage";
 import { AutodartsToolsConfig, defaultConfig } from "@/utils/storage";
 import AppButton from "@/components/AppButton.vue";
+import ConfigDropDownButton from "@/components/ConfigDropDownButton.vue";
 import { AutodartsToolsCallerConfig, defaultCallerConfig } from "@/utils/callerStorage";
 import type { ISoundsConfig, TSoundData } from "@/utils/soundsStorage";
 import { AutodartsToolsSoundsConfig, defaultSoundsConfig } from "@/utils/soundsStorage";
 import { playPointsSound, playSound } from "@/utils/playSound";
+import type { ITrainingsStore, TAutodartsVariant } from "@/utils/trainingStorage";
+import { AutodartsToolsTrainingsConfig, AutodartsVariants, ShanghaiModes, defaultTrainingsConfig } from "@/utils/trainingStorage";
 
 const config = ref<IConfig>();
 const callerConfig = ref<ICallerConfig>();
 const soundsConfig = ref<ISoundsConfig>();
+const trainingsConfig = ref<ITrainingsStore>();
 const streamingModeBackgroundFileSelect = ref() as Ref<HTMLInputElement>;
 const tripleCountArr = [ 15, 16, 17, 18, 19, 20 ];
 
@@ -1185,6 +1263,7 @@ onMounted(async () => {
   config.value = await AutodartsToolsConfig.getValue();
   callerConfig.value = await AutodartsToolsCallerConfig.getValue();
   soundsConfig.value = await AutodartsToolsSoundsConfig.getValue();
+  trainingsConfig.value = await AutodartsToolsTrainingsConfig.getValue();
 });
 
 watch(config, async () => {
@@ -1205,6 +1284,13 @@ watch(soundsConfig, async () => {
   await AutodartsToolsSoundsConfig.setValue({
     ...JSON.parse(JSON.stringify(defaultSoundsConfig)),
     ...JSON.parse(JSON.stringify(soundsConfig.value)),
+  });
+}, { deep: true });
+
+watch(trainingsConfig, async () => {
+  await AutodartsToolsTrainingsConfig.setValue({
+    ...JSON.parse(JSON.stringify(defaultTrainingsConfig)),
+    ...JSON.parse(JSON.stringify(trainingsConfig.value)),
   });
 }, { deep: true });
 
@@ -1269,6 +1355,38 @@ function handleSoundReset(configKey: string, arrIndex?: number) {
   if (!soundConfig) return;
   soundConfig.info = defaultSoundsConfig[configKey].info;
   soundConfig.data = "";
+}
+
+function onAddTraining(trainingsIndex: number, variant: TAutodartsVariant) {
+  switch (variant) {
+    case "Segment Training":
+      trainingsConfig.value?.trainings[trainingsIndex].games.push({
+        variant,
+        mode: "Double",
+        segment: "20",
+        hits: "33",
+      });
+      break;
+    case "Shanghai":
+      trainingsConfig.value?.trainings[trainingsIndex].games.push({
+        variant,
+        mode: "1-7",
+      });
+      break;
+    case "X01":
+      trainingsConfig.value?.trainings[trainingsIndex].games.push({
+        variant,
+        baseScore: 501,
+        bullMode: "25/50",
+        bullOffMode: "Off",
+        inMode: "Straight",
+        outMode: "Double",
+        maxRounds: 20,
+        legs: 10,
+      });
+      break;
+  }
+  // trainingsConfig.value!.trainings.push({ name: "", games: [{ variant, mode: "" }] });
 }
 </script>
 
