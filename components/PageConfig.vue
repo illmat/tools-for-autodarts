@@ -1155,7 +1155,7 @@
             <template v-if="config.training.enabled && trainingsConfig">
               <div v-for="(training, trainingsIndex) in trainingsConfig.trainings" :key="trainingsIndex" class="grid items-center gap-4 lg:grid-cols-[6rem_2fr] lg:grid-rows-1">
                 <div>Training {{ trainingsIndex + 1 }}</div>
-                <div class="grid items-center gap-4 lg:grid-cols-[2fr_50px_50px] lg:grid-rows-2">
+                <div class="grid items-center gap-4 lg:grid-cols-[2fr_50px_50px_50px] lg:grid-rows-2">
                   <input
                     v-model="trainingsConfig.trainings[trainingsIndex].name"
                     type="text"
@@ -1163,13 +1163,11 @@
                     class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
                   >
                   <ConfigDropDownButton @select="(variant) => onAddTraining(trainingsIndex, variant)" icon="plus" :items="AutodartsVariants" />
-
-                  <!-- <button
-                    @click="trainingsConfig.trainings[trainingsIndex].games.push({ variant: 'Shanghai', mode: '1-7' })"
+                  <button
                     class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
                   >
-                    <span class="icon-[mdi-light--plus] text-lg" />
-                  </button> -->
+                    <span class="icon-[mdi-light--play] text-lg" />
+                  </button>
                   <button
                     @click="trainingsConfig.trainings.splice(trainingsIndex, 1)"
                     class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
@@ -1178,9 +1176,9 @@
                   </button>
                   <div>
                     <template v-for="(__, gamesIndex) in trainingsConfig.trainings[trainingsIndex].games">
-                      <div v-if="__.variant === 'Shanghai'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[100px_100px_1fr_50px_50px]">
-                        <div>{{ __.variant }}</div>
-                        <select id="example" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                      <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'Shanghai'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[150px_100px_1fr_50px_50px_50px]">
+                        <div>{{ trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant }}</div>
+                        <select v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].mode" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
                           <option v-for="shanghaiMode in ShanghaiModes" :key="shanghaiMode">
                             {{ shanghaiMode }}
                           </option>
@@ -1191,6 +1189,76 @@
                         </button>
                         <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
                           <span class="icon-[mdi-light--arrow-down] text-lg" />
+                        </button>
+                        <button @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)" class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--delete] text-lg" />
+                        </button>
+                      </div>
+
+                      <div v-if="__.variant === 'Segment Training'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[150px_100px_1fr_50px_50px]">
+                        <div>{{ __.variant }}</div>
+                        <div />
+                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--arrow-up] text-lg" />
+                        </button>
+                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--arrow-down] text-lg" />
+                        </button>
+                        <button @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)" class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--delete] text-lg" />
+                        </button>
+                      </div>
+
+                      <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'X01'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[150px_100px_1fr_50px_50px]">
+                        <div>{{ trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant }}</div>
+                        <select v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].baseScore" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <option v-for="x01BaseScore in X01BaseScores" :key="x01BaseScore">
+                            {{ x01BaseScore }}
+                          </option>
+                        </select>
+
+                        <select v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].inMode" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <option v-for="x01InMode in X01InModes" :key="x01InMode">
+                            {{ x01InMode }}
+                          </option>
+                        </select>
+
+                        <select v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].outMode" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <option v-for="x01OutMode in X01OutModes" :key="x01OutMode">
+                            {{ x01OutMode }}
+                          </option>
+                        </select>
+
+                        <select v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bullMode" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <option v-for="x01BullMode in X01BullModes" :key="x01BullMode">
+                            {{ x01BullMode }}
+                          </option>
+                        </select>
+
+                        <select v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bullOffMode" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <option v-for="x01BullOffMode in X01BullOffModes" :key="x01BullOffMode">
+                            {{ x01BullOffMode }}
+                          </option>
+                        </select>
+
+                        <select v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].botLevel" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <option value="0">
+                            No Bot
+                          </option>
+                          <option v-for="x01BotLevel in X01BotLevels" :key="x01BotLevel">
+                            {{ x01BotLevel }}
+                          </option>
+                        </select>
+
+                        <div />
+                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--arrow-up] text-lg" />
+                        </button>
+                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--arrow-down] text-lg" />
+                        </button>
+                        <button @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)" class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
+                          <span class="icon-[mdi-light--delete] text-lg" />
                         </button>
                       </div>
                       <!-- {{ JSON.stringify(trainingsConfig.trainings[index].games[gamesIndex]) }} -->
@@ -1230,7 +1298,12 @@ import type { ISoundsConfig, TSoundData } from "@/utils/soundsStorage";
 import { AutodartsToolsSoundsConfig, defaultSoundsConfig } from "@/utils/soundsStorage";
 import { playPointsSound, playSound } from "@/utils/playSound";
 import type { ITrainingsStore, TAutodartsVariant } from "@/utils/trainingStorage";
-import { AutodartsToolsTrainingsConfig, AutodartsVariants, ShanghaiModes, defaultTrainingsConfig } from "@/utils/trainingStorage";
+import {
+  AutodartsToolsTrainingsConfig, AutodartsVariants, ShanghaiModes, X01BaseScores,
+  X01BotLevels, X01BullModes, X01BullOffModes, X01InModes, X01OutModes,
+  defaultTrainingsConfig,
+
+} from "@/utils/trainingStorage";
 
 const config = ref<IConfig>();
 const callerConfig = ref<ICallerConfig>();
