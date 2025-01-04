@@ -1178,11 +1178,7 @@
                     <template v-for="(__, gamesIndex) in trainingsConfig.trainings[trainingsIndex].games">
                       <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'Shanghai'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[150px_100px_1fr_50px_50px_50px]">
                         <div>{{ trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant }}</div>
-                        <select v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].mode" class="h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <option v-for="shanghaiMode in ShanghaiModes" :key="shanghaiMode">
-                            {{ shanghaiMode }}
-                          </option>
-                        </select>
+                        <SelectBox v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].mode" :options="ShanghaiModes" label="Mode" />
                         <div />
                         <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
                           <span class="icon-[mdi-light--arrow-up] text-lg" />
@@ -1219,62 +1215,11 @@
                           </div>
                         </div>
                         <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].baseScore" :options="X01BaseScores" label="Base Score" />
-
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-gray-300">
-                            In Mode
-                          </label>
-                          <select v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].inMode" class="mb-4 w-full rounded-md border border-white/10 bg-white/5 p-2 text-gray-300">
-                            <option v-for="x01InMode in X01InModes" :key="x01InMode">
-                              {{ x01InMode }}
-                            </option>
-                          </select>
-                        </div>
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-gray-300">
-                            Out Mode
-                          </label>
-                          <select v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].outMode" class="mb-4 w-full rounded-md border border-white/10 bg-white/5 p-2 text-gray-300">
-                            <option v-for="x01OutMode in X01OutModes" :key="x01OutMode">
-                              {{ x01OutMode }}
-                            </option>
-                          </select>
-                        </div>
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-gray-300">
-                            Bull Mode
-                          </label>
-                          <select v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bullMode" class="mb-4 w-full rounded-md border border-white/10 bg-white/5 p-2 text-gray-300">
-                            <option v-for="x01BullMode in X01BullModes" :key="x01BullMode">
-                              {{ x01BullMode }}
-                            </option>
-                          </select>
-                        </div>
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-gray-300">
-                            Bull Off Mode
-                          </label>
-                          <select v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bullOffMode" class="mb-4 w-full rounded-md border border-white/10 bg-white/5 p-2 text-gray-300">
-                            <option v-for="x01BullOffMode in X01BullOffModes" :key="x01BullOffMode">
-                              {{ x01BullOffMode }}
-                            </option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-gray-300">
-                            Bot Level
-                          </label>
-                          <select v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].botLevel" class="mb-4 w-full rounded-md border border-white/10 bg-white/5 p-2 text-gray-300">
-                            <option value="0">
-                              No Bot
-                            </option>
-                            <option v-for="x01BotLevel in X01BotLevels" :key="x01BotLevel">
-                              {{ x01BotLevel }}
-                            </option>
-                          </select>
-                        </div>
-
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].inMode" :options="X01InModes" label="In Mode" />
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].outMode" :options="X01OutModes" label="Out Mode" />
+                        <SelectBox v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bullMode" :options="X01BullModes" label="Bull Mode" />
+                        <SelectBox v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bullOffMode" :options="X01BullOffModes" label="Bull Off Mode" />
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].botLevel" :options="X01BotLevels" label="Bot Level" />
                         <div />
                         <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
                           <span class="icon-[mdi-light--arrow-up] text-lg" />

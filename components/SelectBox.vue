@@ -2,9 +2,11 @@
   <div>
     <label class="mb-1 block text-sm font-medium text-gray-300">{{ label }}</label>
     <select v-model="internalValue" class="mb-4 w-full rounded-md border border-white/10 bg-white/5 p-2 text-gray-300">
+      <slot name="prepend" />
       <option v-for="option in options" :key="option" :value="option">
         {{ option }}
       </option>
+      <slot name="append" />
     </select>
   </div>
 </template>
@@ -15,7 +17,7 @@ import { ref, toRefs, watch } from "vue";
 const props = defineProps({
   modelValue: {
     type: [ String, Number ],
-    required: true,
+    required: false,
   },
   options: {
     type: Array as () => string[] | number[] | readonly string[] | readonly number[],
