@@ -13,21 +13,21 @@ export const X01BullModes = [ "25/50", "50/50" ] as const;
 export const X01InModes = [ "Straight", "Double", "Master" ] as const;
 export const X01OutModes = [ "Straight", "Double", "Master" ] as const;
 export const X01MaxRounds = [ 15, 20, 50, 80 ] as const;
-export const X01BaseScore = [ 121, 170, 301, 501, 701, 901 ] as const;
-export const X01BullOffMode = [ "Off", "Normal", "Official" ] as const;
+export const X01BaseScores = [ 121, 170, 301, 501, 701, 901 ] as const;
+export const X01BullOffModes = [ "Off", "Normal", "Official" ] as const;
 export const X01Legs = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ] as const;
 export const X01Sets = [ 2, 3, 4, 5, 6, 7 ] as const;
-export const X01BotLevel = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ] as const;
+export const X01BotLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ] as const;
 
 export type TX01BullMode = typeof X01BullModes[number];
 export type TX01InMode = typeof X01InModes[number];
 export type TX01OutMode = typeof X01OutModes[number];
 export type TX01MaxRounds = typeof X01MaxRounds[number];
-export type TX01BaseScore = typeof X01BaseScore[number];
-export type TX01BullOffMode = typeof X01BullOffMode[number];
+export type TX01BaseScore = typeof X01BaseScores[number];
+export type TX01BullOffMode = typeof X01BullOffModes[number];
 export type TX01Legs = typeof X01Legs[number];
 export type TX01Sets = typeof X01Sets[number];
-export type TX01BotLevel = typeof X01BotLevel[number];
+export type TX01BotLevel = typeof X01BotLevels[number];
 
 // Segment Training
 export const SegmentTrainingModes = [ "Single", "Outer Single", "Double", "Triple", "Random" ] as const;
