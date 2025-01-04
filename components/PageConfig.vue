@@ -1218,16 +1218,7 @@
                             {{ trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant }}
                           </div>
                         </div>
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-gray-300">
-                            Base Score
-                          </label>
-                          <select v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].baseScore" class="mb-4 w-full rounded-md border border-white/10 bg-white/5 p-2 text-gray-300">
-                            <option v-for="x01BaseScore in X01BaseScores" :key="x01BaseScore">
-                              {{ x01BaseScore }}
-                            </option>
-                          </select>
-                        </div>
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].baseScore" :options="X01BaseScores" label="Base Score" />
 
                         <div>
                           <label class="mb-1 block text-sm font-medium text-gray-300">
@@ -1338,6 +1329,7 @@ import {
   defaultTrainingsConfig,
 
 } from "@/utils/trainingStorage";
+import SelectBox from "@/components/SelectBox.vue";
 
 const config = ref<IConfig>();
 const callerConfig = ref<ICallerConfig>();
