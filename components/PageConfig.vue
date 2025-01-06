@@ -1162,7 +1162,7 @@
                     placeholder="Name"
                     class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
                   >
-                  <ConfigDropDownButton @select="(variant) => onAddTraining(trainingsIndex, variant)" icon="plus" :items="AutodartsVariants" />
+                  <ConfigDropDown @select="(variant) => onAddTraining(trainingsIndex, variant)" icon="icon-[mdi-light--plus]" :items="AutodartsVariants" />
                   <button
                     class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
                   >
@@ -1206,30 +1206,33 @@
                       </div>
 
                       <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'X01'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[150px_100px_1fr_50px_50px]">
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-gray-300">
-                            Game Variant
-                          </label>
-                          <div class="mb-4 text-gray-400">
-                            {{ trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant }}
-                          </div>
-                        </div>
+                        <TextBox label="Game Variant" :value="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant" />
                         <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].baseScore" :options="X01BaseScores" label="Base Score" />
                         <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].inMode" :options="X01InModes" label="In Mode" />
                         <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].outMode" :options="X01OutModes" label="Out Mode" />
                         <SelectBox v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bullMode" :options="X01BullModes" label="Bull Mode" />
                         <SelectBox v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bullOffMode" :options="X01BullOffModes" label="Bull Off Mode" />
-                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].botLevel" :options="X01BotLevels" label="Bot Level" />
+                        <SelectBox v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].sets" :options="X01Sets" label="Sets" />
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].legs" :options="X01Legs" label="Legs" />
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].maxRounds" :options="X01MaxRounds" label="Max rounds" />
+                        <TextBox label="Bots" :value="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bots.join(', ')" />
+
+                        <ConfigDropDown
+                          @select="(botLevel) => trainingsConfig?.trainings[trainingsIndex].games[gamesIndex].variant === 'X01' && trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bots.push(botLevel)"
+                          text="Add bot" :items="X01BotLevels"
+                        />
+                        <ConfigButton
+                          @click="onDeleteBots(trainingsIndex, gamesIndex)"
+                          text="remove bots"
+                        />
+
                         <div />
-                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--arrow-up] text-lg" />
-                        </button>
-                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--arrow-down] text-lg" />
-                        </button>
-                        <button @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)" class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--delete] text-lg" />
-                        </button>
+                        <ConfigButton icon="icon-[mdi-light--arrow-up]" />
+                        <ConfigButton icon="icon-[mdi-light--arrow-down]" />
+                        <ConfigButton
+                          @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)"
+                          icon="icon-[mdi-light--delete]"
+                        />
                       </div>
                       <!-- {{ JSON.stringify(trainingsConfig.trainings[index].games[gamesIndex]) }} -->
                     </template>
@@ -1257,12 +1260,14 @@
 
 <script setup lang="ts">
 import { twMerge } from "tailwind-merge";
+import TextBox from "./TextBox.vue";
+import ConfigButton from "./ConfigButton.vue";
 import AppToggle from "@/components/AppToggle.vue";
 import type { IConfig } from "@/utils/storage";
 import type { ICallerConfig } from "@/utils/callerStorage";
 import { AutodartsToolsConfig, defaultConfig } from "@/utils/storage";
 import AppButton from "@/components/AppButton.vue";
-import ConfigDropDownButton from "@/components/ConfigDropDownButton.vue";
+import ConfigDropDown from "@/components/ConfigDropDown.vue";
 import { AutodartsToolsCallerConfig, defaultCallerConfig } from "@/utils/callerStorage";
 import type { ISoundsConfig, TSoundData } from "@/utils/soundsStorage";
 import { AutodartsToolsSoundsConfig, defaultSoundsConfig } from "@/utils/soundsStorage";
@@ -1270,7 +1275,8 @@ import { playPointsSound, playSound } from "@/utils/playSound";
 import type { ITrainingsStore, TAutodartsVariant } from "@/utils/trainingStorage";
 import {
   AutodartsToolsTrainingsConfig, AutodartsVariants, ShanghaiModes, X01BaseScores,
-  X01BotLevels, X01BullModes, X01BullOffModes, X01InModes, X01OutModes,
+  X01BotLevels, X01BullModes, X01BullOffModes, X01InModes, X01Legs, X01MaxRounds, X01OutModes,
+  X01Sets,
   defaultTrainingsConfig,
 
 } from "@/utils/trainingStorage";
@@ -1401,6 +1407,13 @@ function handleSoundReset(configKey: string, arrIndex?: number) {
   soundConfig.data = "";
 }
 
+function onDeleteBots(trainingsIndex: number, gamesIndex: number) {
+  if (trainingsConfig.value?.trainings[trainingsIndex].games[gamesIndex].variant !== "X01") {
+    return;
+  }
+  trainingsConfig.value.trainings[trainingsIndex].games[gamesIndex].bots = [];
+}
+
 function onAddTraining(trainingsIndex: number, variant: TAutodartsVariant) {
   switch (variant) {
     case "Segment Training":
@@ -1427,6 +1440,8 @@ function onAddTraining(trainingsIndex: number, variant: TAutodartsVariant) {
         outMode: "Double",
         maxRounds: 20,
         legs: 10,
+        bots: [],
+        sets: 0,
       });
       break;
   }

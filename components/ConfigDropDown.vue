@@ -3,7 +3,7 @@
     <button @click="toggleDropdown" class="inline-flex w-full items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
       {{ text }}
 
-      <span v-if="icon" :class="`icon-[mdi-light--${icon}] text-lg`" />
+      <span v-if="icon" :class="`${icon} text-lg`" />
     </button>
     <div v-if="isOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
       <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">

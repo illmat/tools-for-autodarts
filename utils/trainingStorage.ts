@@ -16,7 +16,7 @@ export const X01MaxRounds = [ 15, 20, 50, 80 ] as const;
 export const X01BaseScores = [ 121, 170, 301, 501, 701, 901 ] as const;
 export const X01BullOffModes = [ "Off", "Normal", "Official" ] as const;
 export const X01Legs = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ] as const;
-export const X01Sets = [ 2, 3, 4, 5, 6, 7 ] as const;
+export const X01Sets = [ 0, 2, 3, 4, 5, 6, 7 ] as const;
 export const X01BotLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ] as const;
 
 export type TX01BullMode = typeof X01BullModes[number];
@@ -59,9 +59,9 @@ export interface ITrainingSettingsX01 extends ITrainingsSettingsBase {
   maxRounds: TX01MaxRounds;
   outMode: TX01OutMode;
   bullOffMode: TX01BullOffMode;
-  legs?: TX01Legs;
-  sets?: TX01Sets;
-  botLevel?: TX01BotLevel;
+  legs: TX01Legs;
+  sets: TX01Sets;
+  bots: TX01BotLevel[];
 }
 
 export interface ITrainingSettingsShanghai extends ITrainingsSettingsBase {

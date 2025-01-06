@@ -32,13 +32,13 @@ const props = defineProps({
 const emits = defineEmits([ "update:modelValue" ]);
 
 const { modelValue } = toRefs(props);
-const internalValue = ref(modelValue.value);
+const internalValue = ref(modelValue?.value);
 
 watch(internalValue, (newValue) => {
   emits("update:modelValue", newValue);
 });
 
-watch(modelValue, (newValue) => {
+watch(() => props.modelValue, (newValue) => {
   internalValue.value = newValue;
 });
 </script>
