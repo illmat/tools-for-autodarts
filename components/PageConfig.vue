@@ -1176,36 +1176,33 @@
                   </button>
                   <div>
                     <template v-for="(__, gamesIndex) in trainingsConfig.trainings[trainingsIndex].games">
-                      <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'Shanghai'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[150px_100px_1fr_50px_50px_50px]">
-                        <div>{{ trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant }}</div>
+                      <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'Shanghai'" :key="`${trainingsIndex}_${gamesIndex}`" class="mt-12 grid gap-4 lg:grid-cols-4">
+                        <TextBox label="Game Variant" :value="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant" />
                         <SelectBox v-model="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].mode" :options="ShanghaiModes" label="Mode" />
-                        <div />
-                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--arrow-up] text-lg" />
-                        </button>
-                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--arrow-down] text-lg" />
-                        </button>
-                        <button @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)" class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--delete] text-lg" />
-                        </button>
+                        <ConfigButton icon="icon-[mdi-light--arrow-up]" />
+                        <ConfigButton icon="icon-[mdi-light--arrow-down]" />
+                        <ConfigButton
+                          @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)"
+                          icon="icon-[mdi-light--delete]"
+                        />
                       </div>
 
-                      <div v-if="__.variant === 'Segment Training'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[150px_100px_1fr_50px_50px]">
-                        <div>{{ __.variant }}</div>
-                        <div />
-                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--arrow-up] text-lg" />
-                        </button>
-                        <button class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--arrow-down] text-lg" />
-                        </button>
-                        <button @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)" class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none">
-                          <span class="icon-[mdi-light--delete] text-lg" />
-                        </button>
+                      <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'Segment Training'" :key="`${trainingsIndex}_${gamesIndex}`" class="mt-12 grid gap-4 lg:grid-cols-4">
+                        <TextBox label="Game Variant" :value="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant" />
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].mode" :options="SegmentTrainingModes" label="Mode" />
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].segment" :options="SegmentTrainingSegments" label="Segment" />
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].hits" :options="SegmentTrainingHits" label="Hits" />
+                        <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].throws" :options="SegmentTrainingThrows" label="Throws" />
+
+                        <ConfigButton icon="icon-[mdi-light--arrow-up]" />
+                        <ConfigButton icon="icon-[mdi-light--arrow-down]" />
+                        <ConfigButton
+                          @click="trainingsConfig.trainings[trainingsIndex].games.splice(gamesIndex, 1)"
+                          icon="icon-[mdi-light--delete]"
+                        />
                       </div>
 
-                      <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'X01'" :key="`${trainingsIndex}_${gamesIndex}`" class="grid gap-4 lg:grid-cols-[150px_100px_1fr_50px_50px]">
+                      <div v-if="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant === 'X01'" :key="`${trainingsIndex}_${gamesIndex}`" class="mt-12 grid gap-4 lg:grid-cols-4">
                         <TextBox label="Game Variant" :value="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].variant" />
                         <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].baseScore" :options="X01BaseScores" label="Base Score" />
                         <SelectBox v-model.number="trainingsConfig.trainings[trainingsIndex].games[gamesIndex].inMode" :options="X01InModes" label="In Mode" />
@@ -1226,7 +1223,7 @@
                           text="remove bots"
                         />
 
-                        <div />
+                        <!-- <div /> -->
                         <ConfigButton icon="icon-[mdi-light--arrow-up]" />
                         <ConfigButton icon="icon-[mdi-light--arrow-down]" />
                         <ConfigButton
@@ -1274,7 +1271,7 @@ import { AutodartsToolsSoundsConfig, defaultSoundsConfig } from "@/utils/soundsS
 import { playPointsSound, playSound } from "@/utils/playSound";
 import type { ITrainingsStore, TAutodartsVariant } from "@/utils/trainingStorage";
 import {
-  AutodartsToolsTrainingsConfig, AutodartsVariants, ShanghaiModes, X01BaseScores,
+  AutodartsToolsTrainingsConfig, AutodartsVariants, SegmentTrainingHits, SegmentTrainingModes, SegmentTrainingSegments, SegmentTrainingThrows, ShanghaiModes, X01BaseScores,
   X01BotLevels, X01BullModes, X01BullOffModes, X01InModes, X01Legs, X01MaxRounds, X01OutModes,
   X01Sets,
   defaultTrainingsConfig,
