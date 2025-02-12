@@ -31,7 +31,7 @@ export default defineConfig({
       },
     ],
     web_accessible_resources: [ {
-      resources: [ "dart-zoom.js" ],
+      resources: [ "dart-zoom.js", "interceptor.js" ],
       matches: [ "<all_urls>" ],
     } ],
   },
@@ -60,6 +60,7 @@ export default defineConfig({
               "browser",
               "defineBackground",
               "defineContentScript",
+              "defineUnlistedScript",
               "createShadowRootUi",
               "createIntegratedUi",
             ],
