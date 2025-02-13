@@ -7,8 +7,8 @@ export default defineUnlistedScript(() => {
     switch (routeType) {
       case "AUTH_TOKEN":{
         const typedResponse = response as TokenResponse;
-        const d = parseJwt(typedResponse.access_token);
-        console.log("userId", d.sub);
+        const parsedJwt = parseJwt(typedResponse.access_token);
+        console.log("userId", parsedJwt);
       }
         break;
       case "USER_SETTINGS": {
