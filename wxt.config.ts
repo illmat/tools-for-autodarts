@@ -56,11 +56,15 @@ export default defineConfig({
           "vue/macros",
           "@vueuse/core",
           {
-            wxt: [
-              "browser",
-              "defineBackground",
-              "defineContentScript",
+            "wxt/sandbox": [
               "defineUnlistedScript",
+              "defineContentScript",
+              "defineBackground",
+            ],
+            "wxt/browser": [
+              "browser",
+            ],
+            "wxt/client": [
               "createShadowRootUi",
               "createIntegratedUi",
             ],
