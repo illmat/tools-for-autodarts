@@ -1,102 +1,293 @@
 import "~/assets/tailwind.css";
 import { createApp } from "vue";
+
+import { colorChange, onRemove as colorChangeOnRemove } from "./color-change";
 import Takeout from "./Takeout.vue";
-import { waitForElement } from "@/utils";
-import type { IConfig, IMatchStatus } from "@/utils/storage";
+import { nextPlayerOnTakeOutStuck, nextPlayerOnTakeOutStuckOnRemove } from "./next-player-on-take-out-stuck";
+import { automaticNextLeg, automaticNextLegOnRemove } from "./automatic-next-leg";
+import { smallerScores } from "./smaller-scores";
+import { hideMenuInMatch, hideMenuInMatchOnRemove } from "./hide-menu-in-match";
+import { automaticFullscreen, automaticFullscreenOnRemove } from "./automatic-fullscreen";
+import { largerPlayerMatchData } from "./larger-player-match-data";
+import { largerLegsSets } from "./larger-legs-sets";
+import { largerPlayerNames } from "./larger-player-names";
+import { winnerAnimation, winnerAnimationOnRemove } from "./winner-animation";
+import { ring } from "./ring";
+import { soundFx, soundFxOnRemove } from "./sound-fx";
+import { caller, callerOnRemove } from "./caller";
+import Zoom from "./Zoom.vue";
+import Animations from "./Animations.vue";
+import StreamingMode from "./StreamingMode.vue";
+import QuickCorrection from "./QuickCorrection.vue";
+import { discordStream, discordStreamOnRemove } from "./discord-stream";
+
+import { waitForElement, waitForElementWithTextContent } from "@/utils";
 import {
-  AutodartsToolsBoardStatus,
   AutodartsToolsConfig,
-  AutodartsToolsGlobalStatus,
-  AutodartsToolsMatchStatus,
   AutodartsToolsUrlStatus,
-  defaultMatchStatus,
 } from "@/utils/storage";
+import { fetchWithAuth, isSafari, isiOS } from "@/utils/helpers";
+import { processWebSocketMessage } from "@/utils/websocket-helpers";
+import { AutodartsToolsGameData } from "@/utils/game-data-storage";
 
-import { scoreSmaller } from "@/entrypoints/match.content/scoreSmaller";
-import { colorChange, onRemove as onRemoveColorChange } from "@/entrypoints/match.content/color-change";
-import StreamingMode from "@/entrypoints/match.content/StreamingMode.vue";
+let matchInitialized = false;
+let activeMatchObserver: MutationObserver;
+let gameDataWatcher: any;
 
-import { sounds } from "@/entrypoints/match.content/sounds";
-import { getBoardStatusEl, getMenu } from "@/utils/getElements";
-import { BoardStatus } from "@/utils/types";
-import { isBullOff, isCricket, isValidGameMode, isX01 } from "@/utils/helpers";
-import { soundsWinner } from "@/entrypoints/match.content/soundsWinner";
-import { setCricketClosedPoints } from "@/entrypoints/match.content/setCricketPoints";
-import { hideMenu } from "@/entrypoints/match.content/hideMenu";
-import { automaticNextLeg } from "@/entrypoints/match.content/automaticNextLeg";
-import { playerMatchDataLarger } from "@/entrypoints/match.content/playerMatchDataLarger";
-import {
-  removeWinnerAnimation,
-  removeWinnerAnimationOnEdit,
-  winnerAnimation,
-} from "@/entrypoints/match.content/winner-animation";
-import { soundsStart } from "@/entrypoints/match.content/soundsStart";
-import { liveViewRing } from "@/entrypoints/match.content/liveViewRing";
-import { setPlayerInfo } from "@/entrypoints/match.content/setPlayerInfo";
-import { nextPlayerAfter3darts } from "@/entrypoints/match.content/nextPlayerAfter3darts";
-import { handleUndoMode } from "@/entrypoints/match.content/handleUndoMode";
-import { nextPlayerOnTakeOutStuck } from "@/entrypoints/match.content/nextPlayerOnTakeOutStuck";
-import { disableTakeout } from "@/entrypoints/match.content/disableTakeout";
-
-let takeoutUI: any;
-let streamingModeUI: any;
-let matchReadyUnwatch: any;
-let throwsObserver: MutationObserver;
-let boardStatusObserver: MutationObserver;
+const tools = {
+  streamingMode: null as any,
+  takeout: null as any,
+  animations: null as any,
+  zoom: null as any,
+  quickCorrection: null as any,
+};
 
 export default defineContentScript({
   matches: [ "*://play.autodarts.io/*" ],
   cssInjectionMode: "ui",
   async main(ctx: any) {
-    matchReadyUnwatch = AutodartsToolsUrlStatus.watch(async (url: string) => {
-      const config: IConfig = await AutodartsToolsConfig.getValue();
-      if (/(?<!history)(\/matches\/|\/boards\/)/.test(url)) {
-        await waitForElement("#ad-ext-turn");
-        console.log("Autodarts Tools: Match Ready");
+    AutodartsToolsUrlStatus.watch(async (url: string) => {
+      if (!url && (isiOS() || isSafari())) url = window.location.href;
 
-        if (config.dartZoom?.enabled) {
-          const zoomBar = document.querySelector("#zoom-bar");
-          if (!zoomBar) {
-            const script = document.createElement("script");
-            script.src = browser.runtime.getURL("dart-zoom.js");
-            (document.head || document.documentElement).appendChild(script);
+      if (/\/(matches|boards)\/([0-9a-f-]+)/.test(url) && !url.includes("history")) {
+        await waitForElement("#root > div > div:nth-of-type(2)");
 
-            console.log("Autodarts Tools: Dart Zoom for Autodarts injected");
+        // Extract lobby ID from URL and fetch lobby data
+        let matchId = url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)?.[0];
+        if (matchId) {
+          try {
+            console.log("Autodarts Tools: Fetching match data with cookie authentication...");
+
+            if (url.includes("boards")) {
+              const apiUrl = `https://api.autodarts.io/bs/v0/boards/${matchId}`;
+              const response = await fetchWithAuth(apiUrl);
+
+              if (response.ok) {
+                matchId = (await response.json()).matchId;
+              }
+            }
+
+            console.log("Autodarts Tools: Match ID:", matchId);
+
+            const apiUrl = `https://api.autodarts.io/gs/v0/matches/${matchId}/state`;
+            const response = await fetchWithAuth(apiUrl);
+
+            console.log("Autodarts Tools: Response status:", response.status);
+
+            if (response.ok) {
+              const matchData = await response.json();
+              console.log("Autodarts Tools: Match Data:", matchData);
+              await processWebSocketMessage("autodarts.matches", matchData);
+            } else {
+              console.error("Autodarts Tools: Failed to fetch match data", response.status, response.statusText);
+            }
+          } catch (error) {
+            console.error("Autodarts Tools: Error fetching match data:", error);
           }
         }
 
-        if (!config.disableTakeout.enabled) {
-          const takeoutDiv = document.querySelector("autodarts-tools-takeout");
-          if (!takeoutDiv) initTakeout(ctx).catch(console.error);
+        const activeMatch = window.location.href.includes("boards") ? !(await waitForElementWithTextContent("h2", "Board has no active match", 1000).catch(() => undefined)) : true;
+
+        if (activeMatch) {
+          console.log("Autodarts Tools: Match found, initializing match");
+          initMatch(ctx, url, matchId).catch(console.error);
+
+          if (!gameDataWatcher) {
+            gameDataWatcher = AutodartsToolsGameData.watch(async (value, oldValue) => {
+              if (oldValue?.match?.variant === "Bull-off" && value?.match?.variant !== "Bull-off") {
+                clearMatch(true);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return initMatch(ctx, url, matchId);
+              }
+            });
+          }
+        } else {
+          console.log("Autodarts Tools: No Active Match found, waiting for match to start");
         }
 
-        if (config.streamingMode.enabled) {
-          const div = document.querySelector("autodarts-tools-streaming-mode");
-          if (!div) initStreamingMode(ctx).catch(console.error);
-        }
-
-        initMatch().catch(console.error);
+        activeMatchObserver = startActiveMatchObserver(ctx);
       } else {
-        throwsObserver?.disconnect();
-        boardStatusObserver?.disconnect();
-        takeoutUI?.remove();
-        takeoutUI = null;
-        streamingModeUI?.remove();
-        streamingModeUI = null;
-        await onRemoveColorChange();
-        const menu = getMenu();
-        if (menu) menu.style.display = "flex";
+        clearMatch();
       }
     });
   },
 });
 
+async function initMatch(ctx, url: string, matchId?: string) {
+  if (matchInitialized) return;
+  matchInitialized = true;
+
+  console.log("Autodarts Tools: Initializing match");
+
+  const config = await AutodartsToolsConfig.getValue();
+
+  if (config.hideMenuInMatch.enabled) {
+    await initScript(hideMenuInMatch, url).catch(console.error);
+  }
+
+  if (config.automaticFullscreen.enabled) {
+    await initScript(automaticFullscreen, url).catch(console.error);
+  }
+
+  if (config.streamingMode.enabled) {
+    await initStreamingMode(ctx).catch(console.error);
+  }
+
+  if (config.colors.enabled) {
+    await initScript(colorChange, url).catch(console.error);
+  }
+
+  if (config.takeout.enabled) {
+    await initTakeout(ctx).catch(console.error);
+  }
+
+  if (config.nextPlayerOnTakeOutStuck.enabled) {
+    await initScript(nextPlayerOnTakeOutStuck, url).catch(console.error);
+  }
+
+  if (config.automaticNextLeg.enabled) {
+    await initScript(automaticNextLeg, url).catch(console.error);
+  }
+
+  if (config.smallerScores.enabled) {
+    await initScript(smallerScores, url).catch(console.error);
+  }
+
+  if (config.largerLegsSets.enabled) {
+    await initScript(largerLegsSets, url).catch(console.error);
+  }
+
+  if (config.largerPlayerMatchData.enabled) {
+    await initScript(largerPlayerMatchData, url).catch(console.error);
+  }
+
+  if (config.largerPlayerNames.enabled) {
+    await initScript(largerPlayerNames, url).catch(console.error);
+  }
+
+  if (config.winnerAnimation.enabled) {
+    await initScript(winnerAnimation, url).catch(console.error);
+  }
+
+  if (config.ring.enabled) {
+    await initScript(ring, url).catch(console.error);
+  }
+
+  if (config.zoom.enabled) {
+    await initZoom(ctx).catch(console.error);
+  }
+
+  if (config.ring.enabled) {
+    await initScript(ring, url).catch(console.error);
+  }
+
+  if (config.quickCorrection.enabled) {
+    await initQuickCorrection(ctx).catch(console.error);
+  }
+
+  if (matchId && config.discord.autoStartAfterTimer?.stream) {
+    if (config.discord.autoStartAfterTimer?.matchId === matchId || config.discord.autoStartAfterTimer?.matchId?.includes(matchId)) await initScript(discordStream, url).catch(console.error);
+  }
+
+  // *********************** YOU CAN ADD HERE ***********************
+
+  // ****************************************************************
+
+  if (config.animations.enabled) {
+    await initAnimations(ctx).catch(console.error);
+  }
+
+  if (config.caller.enabled) {
+    await initScript(caller, url).catch(console.error);
+  }
+
+  if (config.soundFx.enabled) {
+    await initScript(soundFx, url).catch(console.error);
+  }
+}
+
+function clearMatch(fromBullOff: boolean = false) {
+  console.log("Autodarts Tools: Clearing match");
+
+  if (!window.location.href.includes("boards")) activeMatchObserver?.disconnect();
+
+  tools.streamingMode?.remove();
+  tools.takeout?.remove();
+  tools.animations?.remove();
+  tools.zoom?.remove();
+  tools.quickCorrection?.remove();
+  colorChangeOnRemove();
+  if (!fromBullOff) hideMenuInMatchOnRemove();
+  if (!fromBullOff) automaticFullscreenOnRemove();
+  winnerAnimationOnRemove();
+  callerOnRemove();
+  soundFxOnRemove();
+  nextPlayerOnTakeOutStuckOnRemove();
+  discordStreamOnRemove();
+  automaticNextLegOnRemove();
+  matchInitialized = false;
+}
+
+async function initScript(fn: any, url: string) {
+  if (window.location.href !== url) return;
+  await fn();
+}
+
+function startActiveMatchObserver(ctx) {
+  const targetNode = document.querySelector("#root > div > div:nth-of-type(2)");
+  const observer = new MutationObserver(async () => {
+    const url = window.location.href;
+    if (!(/\/(matches|boards)\/([0-9a-f-]+)/.test(url))) return;
+
+    // Check if the "Board has no active match" element no longer exists
+    const activeMatch = window.location.href.includes("boards") ? !(await waitForElementWithTextContent("h2", "Board has no active match", 1000).catch(() => undefined)) : true;
+
+    if (!activeMatch) {
+      console.log("Autodarts Tools Observer: No Active Match found, waiting for match to start");
+      if (matchInitialized) {
+        matchInitialized = false;
+        clearMatch();
+      }
+    } else {
+      const url = await AutodartsToolsUrlStatus.getValue();
+      let matchId = url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)?.[0];
+
+      if (url.includes("boards")) {
+        const apiUrl = `https://api.autodarts.io/bs/v0/boards/${matchId}`;
+        const response = await fetchWithAuth(apiUrl);
+
+        if (response.ok) {
+          matchId = (await response.json()).matchId;
+        }
+      }
+
+      console.log("Autodarts Tools Observer: Match ID:", matchId);
+
+      if (!matchInitialized && matchId) {
+        console.log("Autodarts Tools Observer: Match found, initializing match because activeMatch is true");
+        initMatch(ctx, url, matchId).catch(console.error);
+      }
+    }
+  });
+
+  // Add null check before observing
+  if (targetNode) {
+    observer.observe(targetNode, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  return observer;
+}
+
 async function initTakeout(ctx) {
-  takeoutUI = await createShadowRootUi(ctx, {
+  tools.takeout = await createShadowRootUi(ctx, {
     name: "autodarts-tools-takeout",
     position: "inline",
     anchor: "#root > div > div:nth-of-type(2)",
     onMount: (container) => {
+      console.log("Autodarts Tools: Takeout initialized");
       const takeout = createApp(Takeout);
       takeout.mount(container);
       if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
@@ -108,60 +299,17 @@ async function initTakeout(ctx) {
       takeout?.unmount();
     },
   });
-  takeoutUI.mount();
-}
-
-async function initMatch() {
-  const config = await AutodartsToolsConfig.getValue();
-  await AutodartsToolsMatchStatus.setValue(defaultMatchStatus);
-  const globalStatus = await AutodartsToolsGlobalStatus.getValue();
-
-  startThrowsObserver();
-
-  if (isValidGameMode()
-      && !config.disableTakeout.enabled
-      && getBoardStatusEl()
-      && (config.takeout.enabled || config.automaticNextLeg.enabled || config.nextPlayerOnTakeOutStuck.enabled)) {
-    startBoardStatusObserver();
-  }
-
-  if (isX01() && config.liveViewRing.enabled) {
-    await liveViewRing();
-    startViewObserver();
-  }
-
-  if (config.colors.enabled) {
-    await colorChange();
-  }
-
-  await hideMenu();
-
-  if (isValidGameMode()) {
-    await playerMatchDataLarger();
-    if (!config.disableTakeout.enabled) {
-      await nextPlayerOnTakeOutStuck();
-    }
-
-    if (globalStatus.isFirstStart) {
-      await soundsStart();
-      await AutodartsToolsGlobalStatus.setValue({ ...globalStatus, isFirstStart: false });
-    }
-
-    await disableTakeout();
-  }
-
-  await handleUndoMode();
-
-  throwsChange().catch(console.error);
+  tools.takeout.mount();
 }
 
 async function initStreamingMode(ctx) {
   await waitForElement("#ad-ext-player-display");
-  streamingModeUI = await createShadowRootUi(ctx, {
+  tools.streamingMode = await createShadowRootUi(ctx, {
     name: "autodarts-tools-streaming-mode",
     position: "inline",
     anchor: "#root",
     onMount: (container: any) => {
+      console.log("Autodarts Tools: Streaming Mode initialized");
       const app = createApp(StreamingMode);
       app.mount(container);
       if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
@@ -171,104 +319,85 @@ async function initStreamingMode(ctx) {
     },
     onRemove: (app: any) => {
       app?.unmount();
+      console.log("Autodarts Tools: Streaming Mode removed");
     },
   });
-  streamingModeUI.mount();
+
+  tools.streamingMode.mount();
 }
 
-async function throwsChange() {
-  await setPlayerInfo();
-
-  const matchStatus: IMatchStatus = await AutodartsToolsMatchStatus.getValue();
-
-  if (isValidGameMode()) {
-    if (matchStatus.hasWinner) {
-      if (matchStatus.isInEditMode) {
-        await removeWinnerAnimationOnEdit();
-      } else {
-        await winnerAnimation();
+async function initAnimations(ctx) {
+  await waitForElement("#root > div > div:nth-of-type(2)");
+  tools.animations = await createShadowRootUi(ctx, {
+    name: "autodarts-tools-animations",
+    position: "inline",
+    anchor: "#root > div > div:nth-of-type(2)",
+    onMount: (container: any) => {
+      console.log("Autodarts Tools: Animations initialized");
+      const app = createApp(Animations);
+      app.mount(container);
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        container.classList.add("dark");
       }
-    } else {
-      await removeWinnerAnimation();
-    }
-
-    await nextPlayerAfter3darts();
-  }
-
-  if (isBullOff() && matchStatus.hasWinner) {
-    const bullOffInterval = setInterval(() => {
-      clearInterval(bullOffInterval);
-      initMatch().catch(console.error);
-    }, 1000);
-  }
-
-  await scoreSmaller();
-  await sounds();
-
-  if (isCricket()) await setCricketClosedPoints(matchStatus.playerCount).catch(console.error);
-
-  matchStatus.hasWinner && isValidGameMode() && (await soundsWinner());
-
-  if (matchStatus.hasWinner) {
-    const isBot = document.querySelector(".ad-ext-player-winner .ad-ext-player-name")?.textContent?.startsWith("BOT LEVEL");
-    if (isBot) await automaticNextLeg();
-  }
-
-  await AutodartsToolsMatchStatus.setValue({
-    ...matchStatus,
-    isInUndoMode: false,
+      return app;
+    },
+    onRemove: (app: any) => {
+      app?.unmount();
+      console.log("Autodarts Tools: Animations removed");
+    },
   });
+
+  tools.animations.mount();
 }
 
-function startThrowsObserver() {
-  const targetNode = document.getElementById("ad-ext-turn");
-  if (!targetNode) {
-    console.error("Target node not found");
-    return;
-  }
-  throwsObserver = new MutationObserver((m) => {
-    if (m[0].attributeName === "class") {
-      // timeout to get correct values after edit
-      setTimeout(() => throwsChange().catch(console.error), 500);
-    }
-  });
-  throwsObserver.observe(targetNode, { childList: false, subtree: true, attributes: true });
-}
+async function initZoom(ctx) {
+  await waitForElement("#root > div > div:nth-of-type(2)");
+  const config = await AutodartsToolsConfig.getValue();
 
-function startBoardStatusObserver() {
-  const targetNode = getBoardStatusEl();
-  if (!targetNode) {
-    console.log("Autodarts Tools: No board status found");
-    return;
-  }
-  boardStatusObserver = new MutationObserver((m) => {
-    m.forEach((record) => {
-      if (record.type === "characterData" && record.target.textContent && Object.values(BoardStatus).includes(record.target.textContent as BoardStatus)) {
-        AutodartsToolsBoardStatus.setValue(record.target.textContent as BoardStatus).catch(console.error);
-        // automatic next leg if board status is throw (so it starts counting after takeout)
-        if (record.target.textContent === BoardStatus.THROW) {
-          AutodartsToolsMatchStatus.getValue().then((matchStatus) => {
-            if (matchStatus.hasWinner) automaticNextLeg().catch(console.error);
-          });
-        }
+  const selector = (config.zoom.position === "bottom-right" || config.zoom.position === "bottom-left") ? "#root > div > div:nth-of-type(2)" : "#root > div > div:nth-of-type(1)";
+
+  tools.zoom = await createShadowRootUi(ctx, {
+    name: "autodarts-tools-zoom",
+    position: "inline",
+    anchor: selector,
+    onMount: (container: any) => {
+      console.log("Autodarts Tools: Zoom initialized");
+      const app = createApp(Zoom);
+      app.mount(container);
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        container.classList.add("dark");
       }
-    });
+      return app;
+    },
+    onRemove: (app: any) => {
+      app?.unmount();
+      console.log("Autodarts Tools: Zoom removed");
+    },
   });
-  boardStatusObserver.observe(targetNode, { characterData: true, subtree: true });
+
+  tools.zoom.mount();
 }
 
-function startViewObserver() {
-  const targetNode = document.getElementById("ad-ext-turn")?.nextElementSibling;
-  if (!targetNode) {
-    console.error("Target node not found");
-    return;
-  }
-  throwsObserver = new MutationObserver((m) => {
-    m.forEach(async (record) => {
-      if (record.addedNodes.length > 0 && record.addedNodes[0] && (record.addedNodes[0] as HTMLElement).childElementCount === 2 && (record.addedNodes[0] as HTMLElement).children[1].childElementCount === 2) {
-        await liveViewRing();
+async function initQuickCorrection(ctx) {
+  await waitForElement("#root > div > div:nth-of-type(2)");
+  tools.quickCorrection = await createShadowRootUi(ctx, {
+    name: "autodarts-tools-quick-correction",
+    position: "inline",
+    anchor: "#root > div > div:nth-of-type(2)",
+    onMount: (container: any) => {
+      console.log("Autodarts Tools: Quick Correction initialized");
+      const app = createApp(QuickCorrection);
+      app.mount(container);
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        container.classList.add("dark");
       }
-    });
+      return app;
+    },
+    onRemove: (app: any) => {
+      app?.unmount();
+      console.log("Autodarts Tools: Quick Correction removed");
+    },
   });
-  throwsObserver.observe(targetNode, { childList: true, subtree: true, attributes: false });
+
+  tools.quickCorrection.mount();
 }

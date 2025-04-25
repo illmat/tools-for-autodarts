@@ -1,1139 +1,125 @@
 <template>
-  <div class="mb-16 space-y-8">
-    <div class="space-y-4">
-      <div class="flex items-center">
-        <AppButton
-          @click="goBack()"
-          class="mr-4 h-9 w-8 rounded-md border border-white/10 bg-transparent p-0 pt-[0.2rem] text-xl hover:bg-white/10"
-        >
-          <span class="icon-[mdi-light--chevron-left]" />
-        </AppButton>
-        <h1 class="text-3xl font-bold">
-          Autodarts Tools
-        </h1>
-      </div>
+  <div>
+    <!-- Confirmation Dialog -->
+    <ConfirmDialog
+      @confirm="confirmDialogConfirm"
+      @cancel="confirmDialogCancel"
+      :show="confirmDialog.show"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :confirm-text="confirmDialog.confirmText"
+      :cancel-text="confirmDialog.cancelText"
+    />
 
-      <template v-if="config">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Discord Webhooks
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Whenever a <b>private</b> lobby opens, it sends the invitation link to your discord server using a webhook.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.discord.enabled" />
-              <input
-                v-model="config.discord.url"
-                type="text"
-                class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
-              >
-            </div>
-            <template v-if="config.discord.enabled">
-              <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-                <AppToggle v-model="config.discord.manually" text-on="MAN" text-off="AUT" />
-                <p>Toggles between sending the invitation link automatically or manually.</p>
-              </div>
-            </template>
+    <!-- Notification -->
+    <AppNotification
+      @close="hideNotification"
+      :show="notification.show"
+      :message="notification.message"
+      :type="notification.type"
+    />
+
+    <!-- Settings Modal -->
+    <SettingsModal
+      @close="closeSettingsModal"
+      v-if="activeSettings && getComponentForSetting(activeSettings)"
+      :show="showSettingsModal"
+      :title="getSettingTitle(activeSettings)"
+    >
+      <component @setting-change="handleSettingChange" :is="getComponentForSetting(activeSettings)" :config="config" />
+    </SettingsModal>
+
+    <div class="mx-auto mb-16 max-w-[1366px] space-y-8">
+      <div class="space-y-4">
+        <div class="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div class="flex items-center">
+            <AppButton
+              @click="goBack()"
+              class="mr-4 aspect-square size-10 p-0"
+            >
+              <span class="icon-[pixelarticons--arrow-left]" />
+            </AppButton>
+            <h1 class="text-xl font-bold lg:text-2xl xl:text-3xl">
+              Autodarts Tools
+            </h1>
           </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Autostart
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Displays a button to enable autostart on the lobby page. If autostart is enabled, it will automatically start the game after <b>3 seconds</b> once a player joins the lobby.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.autoStart.enabled" />
-            </div>
+          <div class="mt-2 grid grid-cols-2 items-center gap-2 sm:mt-0 sm:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+            <AppButton
+              @click="exportSettings"
+              title="Download settings as file"
+            >
+              <span class="icon-[pixelarticons--calendar-export] mr-2" />
+              <span>Export</span>
+            </AppButton>
+            <AppButton
+              @click="importSettings"
+              title="Import settings from file"
+            >
+              <span class="icon-[pixelarticons--calendar-import] mr-2" />
+              <span>Import</span>
+            </AppButton>
+            <AppButton
+              @click="copyToClipboard"
+              title="Copy settings to clipboard"
+            >
+              <span class="icon-[pixelarticons--copy] mr-2" />
+              <span>Copy</span>
+            </AppButton>
+            <AppButton
+              @click="pasteFromClipboard"
+              title="Paste settings from clipboard"
+            >
+              <span class="icon-[pixelarticons--calendar-import] mr-2" />
+              <span>Paste</span>
+            </AppButton>
+            <AppButton
+              @click="toggleDangerZone"
+              title="Advanced settings"
+              class="aspect-square size-10 p-0"
+            >
+              <span class="icon-[material-symbols--settings-suggest-outline]" />
+            </AppButton>
           </div>
+        </div>
 
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Colors
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Changes the colors of dart throws and scores.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.colors.enabled" />
-            </div>
-            <div v-if="config.colors.enabled" class="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div class="relative min-h-14 w-full">
-                <input
-                  v-model="config.colors.background"
-                  type="color"
-                  class="size-full overflow-hidden rounded-md border-none border-transparent p-0 outline-none"
-                >
-                <span class="pointer-events-none absolute inset-0 flex items-center justify-center p-2 text-center text-xs drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">Click here to change color</span>
-              </div>
-              <div class="relative min-h-14 w-full">
-                <input
-                  v-model="config.colors.text"
-                  type="color"
-                  class="size-full overflow-hidden rounded-md border-none border-transparent p-0 outline-none"
-                >
-                <span class="pointer-events-none absolute inset-0 flex items-center justify-center p-2 text-center text-xs drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">Click here to change color</span>
-              </div>
-              <div
-                class="col-span-2 flex h-14 w-full items-center justify-center rounded-md text-5xl font-bold"
-                :style="{
-                  backgroundColor: config.colors.background,
-                  color: config.colors.text,
-                }"
-              >
-                501
-              </div>
-            </div>
+        <!-- Tabs Component -->
+        <AppTabs
+          v-if="!showDangerZone"
+          v-model="activeTab"
+          :tabs="tabs"
+        />
+
+        <!-- Danger Zone -->
+        <div v-if="showDangerZone" class="adt-container space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-red-400">
+              Danger Zone
+            </h2>
+            <AppButton @click="toggleDangerZone" auto class="text-white/70 hover:text-white">
+              <span class="icon-[pixelarticons--close]" />
+            </AppButton>
           </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Extend recent Local Players
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Default recent local players capped at 5, this will extend it to infinite.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.recentLocalPlayers.enabled" />
-            </div>
-            <div v-if="config.recentLocalPlayers.enabled" class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <input
-                v-model="config.recentLocalPlayers.cap"
-                placeholder="10"
-                type="number"
-                class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none placeholder:opacity-50"
-              >
-              <p>Maximum recent players you want to store</p>
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Disable takeout recognition
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Disables the takeout recognition. So you have to manually click 'Next' after takeout.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.disableTakeout.enabled" />
-            </div>
-          </div>
-
-          <div v-if="!config.disableTakeout.enabled" class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Takeout Notification
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Displays a notification when ever takeout of darts is in progress.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.takeout.enabled" />
-            </div>
-          </div>
-
-          <div v-if="!config.disableTakeout.enabled" class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Automatic next player on takeout
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Automatically reset board and switch to next player if takeout stucks for x seconds.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.nextPlayerOnTakeOutStuck.enabled" />
-              <input
-                v-if="config.nextPlayerOnTakeOutStuck.enabled"
-                v-model="config.nextPlayerOnTakeOutStuck.sec"
-                type="text"
-                class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-center outline-none"
-              >
-              <span v-if="config.nextPlayerOnTakeOutStuck.enabled">seconds</span>
-            </div>
-          </div>
-
-          <div v-if="!config.disableTakeout.enabled" class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Automatic next Leg
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Automatically starts the next leg x seconds <span class="font-semibold text-white/60">after takeout</span>.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.automaticNextLeg.enabled" />
-              <input
-                v-if="config.automaticNextLeg.enabled"
-                v-model="config.automaticNextLeg.sec"
-                type="text"
-                class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-center outline-none"
-              >
-              <span v-if="config.automaticNextLeg.enabled">seconds</span>
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Smaller Scores
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Reduces the font-size of the score of inactive players.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.inactiveSmall.enabled" />
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Shuffle Players
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Adds a button to the lobby page to shuffle the players in the lobby.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.shufflePlayers.enabled" />
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Streaming Mode
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Adds a button to the game page to enable streaming mode. If streaming mode is enabled, it will displays a green overlay with stats and scores which then can be captured by OBS or any other streaming software.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.streamingMode.enabled" />
-            </div>
-            <template v-if="config.streamingMode.enabled">
-              <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-                <AppToggle v-model="config.streamingMode.backgroundImage" text-on="IMG" text-off="CK" />
-                <p>Toggles the Background between Chrome Key and Image</p>
-              </div>
-              <div v-if="!config.streamingMode.backgroundImage" class="grid grid-cols-[5rem_auto] items-center gap-4">
-                <input
-                  v-model="config.streamingMode.chromaKeyColor"
-                  type="color"
-                  class="size-full overflow-hidden rounded border-none border-transparent p-0 outline-none"
-                >
-                <p>Chroma Key Color</p>
-              </div>
-              <div v-else class="grid grid-cols-[5rem_auto] items-center gap-4">
-                <div
-                  @click="handleStreamingModeBackgroundFileSelect"
-                  class="aspect-square w-full cursor-pointer overflow-hidden rounded-md border border-dashed border-white/15"
-                >
-                  <img
-                    v-if="config.streamingMode.image"
-                    :src="config.streamingMode.image"
-                    class="size-full object-cover"
-                  >
-                  <div class="flex size-full items-center justify-center opacity-15">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h9v2H5v14h14v-9h2v9q0 .825-.587 1.413T19 21zM17 9V7h-2V5h2V3h2v2h2v2h-2v2zM6 17h12l-3.75-5l-3 4L9 13zM5 5v14z" /></svg>
-                  </div>
+          <div class="space-y-4">
+            <p class="text-white/70">
+              These actions are destructive and cannot be undone. Please proceed with caution and may export your settings before proceeding.
+            </p>
+            <div class="rounded border border-red-500/30 bg-red-500/5 p-4">
+              <div class="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div>
+                  <h3 class="font-semibold text-red-300">
+                    Reset All Settings
+                  </h3>
+                  <p class="text-sm text-white/60">
+                    This will reset all settings to their default values. All your customizations will be lost.
+                  </p>
                 </div>
-                <div class="flex items-center gap-4">
-                  <AppButton
-                    @click="handleStreamingModeBackgroundFileSelect"
-                    auto
-                  >
-                    Change Image
-                  </AppButton>
-                  <AppButton
-                    @click="handleStreamingModeBackgroundReset"
-                    auto
-                  >
-                    Reset
-                  </AppButton>
-                </div>
-                <input
-                  @change="handleStreamingModeBackgroundFileSelected"
-                  ref="streamingModeBackgroundFileSelect"
-                  class="hidden"
-                  type="file"
-                >
-              </div>
-              <div v-if="config.streamingMode.enabled" class="grid grid-cols-[5rem_auto] items-center gap-4">
-                <AppToggle v-model="config.streamingMode.throws" />
-                <p>Display Throws</p>
-              </div>
-              <div v-if="config.streamingMode.enabled" class="grid grid-cols-[5rem_auto] items-center gap-4">
-                <AppToggle v-model="config.streamingMode.board" />
-                <p>Display the Board</p>
-              </div>
-              <div v-if="config.streamingMode.enabled && config.streamingMode.board" class="grid grid-cols-[5rem_auto] items-center gap-4">
-                <AppToggle v-model="config.streamingMode.boardImage" text-on="LIVE" text-off="IMG" />
-                <p>Toggles the Board between Live and Image mode</p>
-              </div>
-              <input
-                v-model="config.streamingMode.footerText"
-                placeholder="Bottom text of the streaming overlay"
-                class="col-span-2 w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none placeholder:opacity-50"
-              >
-            </template>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                External Boards
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Allows you to save external Boards to easily follow them.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.externalBoards.enabled" />
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Hide Menu in Match
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Hide the menu during the match to have more space.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.menuDisabled" />
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Larger Legs & Sets
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Increases the font-size of the legs and sets on the match page.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_5rem] items-center gap-4">
-              <AppToggle v-model="config.legsSetsLarger.enabled" />
-              <span v-if="config.legsSetsLarger.enabled" class="text-right">size</span>
-              <input
-                v-if="config.legsSetsLarger.enabled"
-                v-model="config.legsSetsLarger.value"
-                type="text"
-                class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-center outline-none"
-              >
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Larger Player Match Data
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Increases the font-size of the player match data on the match page.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_5rem] items-center gap-4">
-              <AppToggle v-model="config.playerMatchData.enabled" />
-              <span v-if="config.playerMatchData.enabled" class="text-right">size</span>
-              <input
-                v-if="config.playerMatchData.enabled"
-                v-model="config.playerMatchData.value"
-                type="text"
-                class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-center outline-none"
-              >
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Winner animation
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Shows an animation around player card when a player wins a leg.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.winnerAnimation.enabled" />
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Show thrown darts
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Shows number of thrown darts after a player wins a leg.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.thrownDartsOnWin.enabled" />
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Show ring
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Shows a ring with numbers around the live view.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.liveViewRing.enabled" />
-            </div>
-            <div v-if="config.liveViewRing.enabled" class="grid grid-cols-[5rem_5rem_5rem_auto] items-center gap-4">
-              <p>Ring color</p>
-              <AppToggle v-model="config.liveViewRing.colorEnabled" />
-              <input
-                v-if="config.liveViewRing.colorEnabled"
-                v-model="config.liveViewRing.color"
-                type="color"
-                class="size-full overflow-hidden rounded border-none border-transparent p-0 outline-none"
-              >
-            </div>
-            <div v-if="config.liveViewRing.enabled" class="grid grid-cols-[5rem_5rem_auto] items-center gap-4">
-              <p>Ring size</p>
-              <input
-                v-model="config.liveViewRing.size"
-                type="number"
-                min="1"
-                max="9"
-                class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
-              >
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Automatic next player after 3 darts
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                After 3 darts the game automatically switches to the next player. So you can throw 6 darts in a row. Only for 1 or 2 player games.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.nextPlayerAfter3darts.enabled" />
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Team lobby
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Removes first player from the lobby and adds every following player to the board.
-                Works only in private Lobbies.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.teamLobby.enabled" />
-            </div>
-          </div>
-
-          <div class="space-y-4 rounded border border-white/10 p-4">
-            <div>
-              <div class="flex items-center justify-between text-lg font-semibold">
-                <div>Dart-Zoom</div>
-                <div class="opacity-50">
-                  <small>by Dotty</small>
-                </div>
-              </div>
-              <p class="max-w-2xl text-white/40">
-                Dart-Zoom on 3 Camera-Views.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_5rem_auto] items-center gap-4">
-              <AppToggle v-model="config.dartZoom.enabled" />
-            </div>
-          </div>
-
-          <div class="col-span-1 space-y-4 rounded border border-white/10 p-4 md:col-span-2">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Caller
-              </h2>
-              <p class="max-w-2xl text-white/40">
-                Adds a caller.
-              </p>
-            </div>
-            <div class="grid grid-cols-[5rem_auto_50px] items-center gap-4">
-              <AppToggle v-model="config.caller.enabled" />
-              <div />
-              <button
-                @click="callerConfig = defaultCallerConfig"
-                v-if="config.caller.enabled"
-                class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-              >
-                <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-              </button>
-            </div>
-            <div v-if="config.caller.enabled && callerConfig">
-              <div class="grid gap-4">
-                <div v-for="(_, index) in callerConfig.caller" :key="index" class="grid items-center gap-4 lg:grid-cols-[5rem_50px_2fr_5fr_1fr_1fr_50px_50px] lg:grid-rows-1">
-                  <div>Caller {{ index + 1 }}</div>
-                  <button
-                    @click="setActive(index)"
-                    :disabled="!callerConfig.caller[index].url"
-                    :class="twMerge(
-                      'flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10',
-                      !callerConfig.caller[index].url && 'bg-white/2 hover:bg-white/2',
-                      callerConfig.caller[index].isActive && 'bg-cyan-600 border-cyan-600',
-                    )"
-                  >
-                    <span :class="twMerge('icon-[mdi-light--check] text-xl', !callerConfig.caller[index].url && 'text-white/30')" />
-                  </button>
-                  <input
-                    v-model="callerConfig.caller[index].name"
-                    type="text"
-                    placeholder="Name (optional)"
-                    class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
-                  >
-                  <input
-                    v-model="callerConfig.caller[index].url"
-                    type="text"
-                    placeholder="URL of folder with caller sound files"
-                    class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
-                  >
-                  <div>
-                    <span>[filename]</span>
-                  </div>
-                  <input
-                    v-model="callerConfig.caller[index].fileExt"
-                    type="text"
-                    placeholder=".mp3"
-                    class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
-                  >
-                  <button
-                    @click="playCallerSound(index)"
-                    :disabled="!callerConfig.caller[index].url"
-                    :class="twMerge(
-                      'flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10',
-                      !callerConfig.caller[index].url && 'bg-white/2 hover:bg-white/2',
-                    )"
-                  >
-                    <span :class="twMerge('icon-[mdi-light--play] text-xl', !callerConfig.caller[index].url && 'text-white/30')" />
-                  </button>
-                  <button
-                    @click="callerConfig.caller.splice(index, 1)"
-                    class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                  >
-                    <span class="icon-[mdi-light--delete] text-lg" />
-                  </button>
-                </div>
-
-                <div class="grid items-center gap-4 lg:grid-cols-[5rem_2fr_5fr_1fr_1fr_50px_50px] lg:grid-rows-1">
-                  <button
-                    @click="callerConfig.caller.push({ url: '' })"
-                    class="flex flex-nowrap items-center  justify-center rounded-md border border-white/10 bg-white/5 p-2 outline-none"
-                  >
-                    <span class="icon-[mdi-light--plus]" />
-                  </button>
-                  <div />
-                  <div />
-                  <div class="col-span-5 text-white/40">
-                    [filename] => 0-180, 'gameshot', 'gameshot and the match'
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-span-1 space-y-4 rounded border border-white/10 p-4 md:col-span-2">
-            <div>
-              <h2 class="text-lg font-semibold">
-                Sounds
-              </h2>
-            </div>
-            <div class="grid grid-cols-[5rem_auto_50px] items-center gap-4">
-              <AppToggle v-model="config.sounds.enabled" />
-              <div />
-              <button
-                @click="soundsConfig = defaultSoundsConfig"
-                v-if="config.sounds.enabled"
-                class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-              >
-                <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-              </button>
-            </div>
-            <div v-if="config.sounds.enabled && soundsConfig" class="grid gap-4">
-              <div class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Triple</div>
-                <input
-                  v-model="soundsConfig.T.info"
-                  type="text"
-                  :disabled="!!soundsConfig.T.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.T.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('T')"
-                  title="Play sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('T')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('T')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('T')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div v-for="tripleCount in tripleCountArr" :key="tripleCount" class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>T{{ tripleCount }}</div>
-                <input
-                  v-model="soundsConfig[`T${tripleCount}`].info"
-                  type="text"
-                  :disabled="!!soundsConfig[`T${tripleCount}`].data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig[`T${tripleCount}`].data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound(`T${tripleCount}`)"
-                  title="Play sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload(`T${tripleCount}`)"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset(`T${tripleCount}`)"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove(`T${tripleCount}`)"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Bull</div>
-                <input
-                  v-model="soundsConfig.bull.info"
-                  type="text"
-                  :disabled="!!soundsConfig.bull.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.bull.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('bull')"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('bull')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('bull')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('bull')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Bust</div>
-                <input
-                  v-model="soundsConfig.bust.info"
-                  type="text"
-                  :disabled="!!soundsConfig.bust.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.bust.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('bust')"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('bust')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('bust')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('bust')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-
-              <div class="grid items-center gap-4 lg:grid-cols-[7rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Game on!</div>
-                <input
-                  v-model="soundsConfig.gameOn.info"
-                  placeholder="sound to play when the game starts"
-                  type="text"
-                  :disabled="!!soundsConfig.gameOn.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.gameOn.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('gameOn')"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('gameOn')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('gameOn')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('gameOn')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-
-              <div class="grid items-center gap-4 lg:grid-cols-[7rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Ready. Throw!</div>
-                <input
-                  v-model="soundsConfig.playerStart.info"
-                  placeholder="sound to play when it's time to throw"
-                  type="text"
-                  :disabled="!!soundsConfig.playerStart.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.playerStart.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('playerStart')"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('playerStart')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('playerStart')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('playerStart')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-
-              <div class="mt-1.5">
-                <span class="font-semibold">
-                  Miss sounds
-                </span>
-                <span class="text-white/40">
-                  &nbsp;(random)
-                </span>
-              </div>
-              <div v-for="(_, index) in soundsConfig.miss" :key="index" class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Miss {{ index + 1 }}</div>
-                <input
-                  v-model="soundsConfig.miss[index].info"
-                  type="text"
-                  :disabled="!!soundsConfig.miss[index].data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.miss[index].data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('miss', 1, index)"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('miss', index)"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('miss', index)"
-                  v-if="index <= 2"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <div v-else />
-                <button
-                  @click="soundsConfig.miss.splice(index, 1)"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div class="grid items-center gap-4 lg:grid-cols-[50px_auto] lg:grid-rows-1">
-                <button
-                  @click="soundsConfig.miss.push({ info: '' })"
-                  class="flex flex-nowrap items-center  justify-center rounded-md border border-white/10 bg-white/5 p-2 outline-none"
-                >
-                  <span class="icon-[mdi-light--plus]" />
-                </button>
-              </div>
-              <div class="mt-1.5">
-                <span class="font-semibold">Bot throw sound</span>
-              </div>
-              <div class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Hit</div>
-                <input
-                  v-model="soundsConfig.bot.info"
-                  type="text"
-                  :disabled="!!soundsConfig.bot.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.bot.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('bot')"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('bot')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('bot')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('bot')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Miss</div>
-                <input
-                  v-model="soundsConfig.botOutside.info"
-                  type="text"
-                  :disabled="!!soundsConfig.botOutside.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.botOutside.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('botOutside')"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('botOutside')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('botOutside')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('botOutside')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div class="mt-1.5">
-                <span class="font-semibold">Cricket sounds</span>
-              </div>
-              <div class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Hit</div>
-                <input
-                  v-model="soundsConfig.cricketHit.info"
-                  type="text"
-                  :disabled="!!soundsConfig.cricketHit.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.cricketHit.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('cricketHit')"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('cricketHit')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('cricketHit')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('cricketHit')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div class="grid items-center gap-4 lg:grid-cols-[5rem_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Miss</div>
-                <input
-                  v-model="soundsConfig.cricketMiss.info"
-                  type="text"
-                  :disabled="!!soundsConfig.cricketMiss.data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.cricketMiss.data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('cricketMiss')"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('cricketMiss')"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('cricketMiss')"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('cricketMiss')"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div class="mt-1.5">
-                <span class="font-semibold">Winner sounds</span>
-              </div>
-              <div v-for="(_, index) in soundsConfig.winner.slice(1)" :key="index" class="grid items-center gap-4 lg:grid-cols-[200px_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <input
-                  v-model="soundsConfig.winner[index + 1].name"
-                  placeholder="Player name"
-                  type="text"
-                  class="w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none"
-                >
-                <input
-                  v-model="soundsConfig.winner[index + 1].info"
-                  placeholder="URL of sound file"
-                  type="text"
-                  :disabled="!!soundsConfig.winner[index + 1].data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.winner[index + 1].data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('winner', 1, index + 1)"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('winner', index + 1)"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <div />
-                <button
-                  @click="soundsConfig.winner.splice(index + 1, 1)"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-              <div class="grid items-center gap-4 lg:grid-cols-[200px_auto_50px_50px_50px_50px] lg:grid-rows-1">
-                <div>Fallback</div>
-                <input
-                  v-model="soundsConfig.winner[0].info"
-                  type="text"
-                  :disabled="!!soundsConfig.winner[0].data"
-                  :class="twMerge(
-                    'w-full rounded-md border border-white/10 bg-transparent px-2 py-1 outline-none',
-                    !!soundsConfig.winner[0].data && 'text-white/40',
-                  )"
-                >
-                <button
-                  @click="playSound('winner', 1, 0)"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--play] text-xl" />
-                </button>
-                <button
-                  @click="handleSoundUpload('winner', 0)"
-                  title="Upload sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--upload] text-lg" />
-                </button>
-                <button
-                  @click="handleSoundReset('winner', 0)"
-                  title="Reset sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none hover:bg-white/10"
-                >
-                  <span class="icon-[mdi-light--refresh] -scale-x-100 text-xl" />
-                </button>
-                <button
-                  @click="handleSoundRemove('winner', 0)"
-                  title="Remove sound"
-                  class="flex h-full flex-nowrap items-center justify-center rounded-md border border-white/10 bg-white/5 outline-none"
-                >
-                  <span class="icon-[mdi-light--delete] text-lg" />
-                </button>
-              </div>
-
-              <div class="grid items-center gap-4 lg:grid-cols-[50px_138px_300px_50px_auto] lg:grid-rows-1">
-                <button
-                  @click="soundsConfig.winner.push({ name: '', info: '' })"
-                  class="flex flex-nowrap items-center  justify-center rounded-md border border-white/10 bg-white/5 p-2 outline-none"
-                >
-                  <span class="icon-[mdi-light--plus]" />
-                </button>
-                <div />
-                <div>Play winner sound after every leg</div>
-                <AppToggle v-model="soundsConfig.winnerSoundOnLegWin" />
+                <AppButton
+                  @click="resetAllSettings"
+                  auto
+                  type="danger"
+                >
+                  Reset All Settings
+                </AppButton>
               </div>
             </div>
           </div>
@@ -1216,7 +202,8 @@
 
                         <ConfigDropDown
                           @select="(botLevel) => trainingsConfig?.trainings[trainingsIndex].games[gamesIndex].variant === 'X01' && trainingsConfig.trainings[trainingsIndex].games[gamesIndex].bots.push(botLevel)"
-                          text="Add bot" :items="X01BotLevels"
+                          text="Add bot"
+                          :items="X01BotLevels"
                         />
                         <ConfigButton
                           @click="onDeleteBots(trainingsIndex, gamesIndex)"
@@ -1250,26 +237,156 @@
             </template>
           </div>
         </div>
-      </template>
+
+        <!-- Feature cards grid for Lobbies tab -->
+        <template v-if="mounted">
+          <div
+            v-if="activeTab === 0 && !showDangerZone"
+            :key="reloadKey"
+            class="grid grid-cols-1 gap-5 lg:grid-cols-2"
+          >
+            <!-- First row of feature cards -->
+            <DiscordWebhooks @toggle="openSettingsModal('discord-webhooks')" @setting-change="updateConfig" class="feature-card" data-feature-index="1" />
+            <AutoStart @setting-change="updateConfig" class="feature-card" data-feature-index="2" />
+
+            <!-- Second row of feature cards -->
+            <RecentLocalPlayers @toggle="openSettingsModal('recent-local-players')" @setting-change="updateConfig" class="feature-card" data-feature-index="3" />
+            <ShufflePlayers @setting-change="updateConfig" class="feature-card" data-feature-index="4" />
+
+            <!-- Third row of feature cards -->
+            <TeamLobby @setting-change="updateConfig" class="feature-card" data-feature-index="5" />
+          </div>
+
+          <!-- Feature cards grid for Matches tab -->
+          <div
+            v-if="activeTab === 1 && !showDangerZone"
+            :key="reloadKey"
+            class="grid grid-cols-1 gap-5 lg:grid-cols-2"
+          >
+            <!-- First row of feature cards -->
+            <Colors @toggle="openSettingsModal('colors')" @setting-change="updateConfig" class="feature-card" data-feature-index="8" />
+            <TakeoutNotification @setting-change="updateConfig" class="feature-card" data-feature-index="9" />
+
+            <!-- Second row of feature cards -->
+            <NextPlayerOnTakeoutStuck @toggle="openSettingsModal('next-player-on-takeout-stuck')" @setting-change="updateConfig" class="feature-card" data-feature-index="10" />
+            <AutomaticNextLeg @toggle="openSettingsModal('automatic-next-leg')" @setting-change="updateConfig" class="feature-card" data-feature-index="11" />
+
+            <!-- Third row of feature cards -->
+            <SmallerScores @setting-change="updateConfig" :config="config" class="feature-card" data-feature-index="12" />
+            <HideMenuInMatch @setting-change="updateConfig" class="feature-card" data-feature-index="13" />
+
+            <!-- Fourth row of feature cards -->
+            <StreamingMode @toggle="openSettingsModal('streaming-mode')" @setting-change="updateConfig" class="feature-card" data-feature-index="14" />
+
+            <!-- Fifth row of feature cards -->
+            <LargerLegsSets @toggle="openSettingsModal('larger-legs-sets')" @setting-change="updateConfig" class="feature-card" data-feature-index="15" />
+            <LargerPlayerNames @toggle="openSettingsModal('larger-player-names')" @setting-change="updateConfig" class="feature-card" data-feature-index="16" />
+
+            <!-- Sixth row of feature cards -->
+            <LargerPlayerMatchData @toggle="openSettingsModal('larger-player-match-data')" @setting-change="updateConfig" class="feature-card" data-feature-index="17" />
+            <WinnerAnimation @setting-change="updateConfig" class="feature-card" data-feature-index="18" />
+
+            <!-- Seventh row of feature cards -->
+            <Ring @toggle="openSettingsModal('ring')" @setting-change="updateConfig" :config="config" class="feature-card" data-feature-index="19" />
+            <AutomaticFullscreen @setting-change="updateConfig" class="feature-card" data-feature-index="20" />
+
+            <!-- Eighth row of feature cards -->
+            <Zoom @toggle="openSettingsModal('zoom')" @setting-change="updateConfig" class="feature-card" data-feature-index="21" />
+
+            <!-- Ninth row of feature cards -->
+            <QuickCorrection @setting-change="updateConfig" class="feature-card" data-feature-index="22" />
+          </div>
+
+          <!-- Feature cards grid for Boards tab -->
+          <div
+            v-if="activeTab === 2 && !showDangerZone"
+            :key="reloadKey"
+            class="grid grid-cols-1 gap-5 lg:grid-cols-2"
+          >
+            <!-- First row of feature cards -->
+            <ExternalBoards @setting-change="updateConfig" class="feature-card" data-feature-index="23" />
+            <div class="feature-card" data-feature-index="24">
+            <!-- Placeholder for future feature -->
+            </div>
+          </div>
+
+          <!-- Feature cards grid for Sounds & Animations tab -->
+          <div
+            v-if="activeTab === 3 && !showDangerZone"
+            :key="reloadKey"
+            class="grid grid-cols-1 gap-5 lg:grid-cols-2"
+          >
+            <!-- Warning message for sound and animation features -->
+            <div class="col-span-full rounded-md border border-yellow-500/50 bg-yellow-500/10 p-4 text-xs">
+              <div class="flex items-start">
+                <div>
+                  <p class="font-medium text-yellow-400">
+                    Performance Warning
+                  </p>
+                  <p class="mt-1 text-white/70">
+                    Enabling the <b>Animations</b>, <b>Caller</b>, or <b>Sound FX</b> features may cause performance issues and may require decent hardware.
+                    If you experience any lags or errors, try disabling these features.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- First row of feature cards -->
+            <Animations @toggle="openSettingsModal('animations')" @setting-change="updateConfig" :config="config" class="feature-card" data-feature-index="25" />
+            <Caller @toggle="openSettingsModal('caller')" @setting-change="updateConfig" class="feature-card" data-feature-index="26" />
+
+            <!-- Second row of feature cards -->
+            <SoundFx @toggle="openSettingsModal('sound-fx')" @setting-change="updateConfig" class="feature-card" data-feature-index="27" />
+            <div class="feature-card" data-feature-index="28">
+            <!-- Placeholder for future feature -->
+            </div>
+          </div>
+        </template>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { twMerge } from "tailwind-merge";
-import TextBox from "./TextBox.vue";
-import ConfigButton from "./ConfigButton.vue";
-import AppToggle from "@/components/AppToggle.vue";
-import type { IConfig } from "@/utils/storage";
-import type { ICallerConfig } from "@/utils/callerStorage";
-import { AutodartsToolsConfig, defaultConfig } from "@/utils/storage";
-import AppButton from "@/components/AppButton.vue";
-import ConfigDropDown from "@/components/ConfigDropDown.vue";
-import { AutodartsToolsCallerConfig, defaultCallerConfig } from "@/utils/callerStorage";
-import type { ISoundsConfig, TSoundData } from "@/utils/soundsStorage";
-import { AutodartsToolsSoundsConfig, defaultSoundsConfig } from "@/utils/soundsStorage";
-import { playPointsSound, playSound } from "@/utils/playSound";
+import { useDebounceFn, useStorage } from "@vueuse/core";
+
+import DiscordWebhooks from "./Settings/DiscordWebhooks.vue";
+import AutoStart from "./Settings/AutoStart.vue";
+import RecentLocalPlayers from "./Settings/RecentLocalPlayers.vue";
+import ShufflePlayers from "./Settings/ShufflePlayers.vue";
+import TeamLobby from "./Settings/TeamLobby.vue";
+import Colors from "./Settings/Colors.vue";
+import TakeoutNotification from "./Settings/TakeoutNotification.vue";
+import NextPlayerOnTakeoutStuck from "./Settings/NextPlayerOnTakeoutStuck.vue";
+import AutomaticNextLeg from "./Settings/AutomaticNextLeg.vue";
+import SmallerScores from "./Settings/SmallerScores.vue";
+import StreamingMode from "./Settings/StreamingMode.vue";
+import HideMenuInMatch from "./Settings/HideMenuInMatch.vue";
+import AutomaticFullscreen from "./Settings/AutomaticFullscreen.vue";
+import LargerLegsSets from "./Settings/LargerLegsSets.vue";
+import LargerPlayerMatchData from "./Settings/LargerPlayerMatchData.vue";
+import LargerPlayerNames from "./Settings/LargerPlayerNames.vue";
+import WinnerAnimation from "./Settings/WinnerAnimation.vue";
+import Ring from "./Settings/Ring.vue";
+import Animations from "./Settings/Animations.vue";
+import Caller from "./Settings/Caller.vue";
+import ExternalBoards from "./Settings/ExternalBoards.vue";
+import SoundFx from "./Settings/SoundFx.vue";
+import Zoom from "./Settings/Zoom.vue";
+import QuickCorrection from "./Settings/QuickCorrection.vue";
+
+import type { IConfig, ISound } from "@/utils/storage";
 import type { ITrainingsStore, TAutodartsVariant } from "@/utils/trainingStorage";
+
+import { AutodartsToolsConfig, defaultConfig } from "@/utils/storage";
+import { clearCallerSoundsFromIndexedDB, clearSoundFxFromIndexedDB, getAllCallerSoundsFromIndexedDB, getAllSoundFxFromIndexedDB, isIndexedDBAvailable, saveSoundFxToIndexedDB, saveSoundToIndexedDB } from "@/utils/helpers";
+import AppButton from "@/components/AppButton.vue";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
+import AppNotification from "@/components/AppNotification.vue";
+import SettingsModal from "@/components/SettingsModal.vue";
+import { useConfirmDialog } from "@/composables/useConfirmDialog";
+import { useNotification } from "@/composables/useNotification";
+import AppTabs from "@/components/AppTabs.vue";
 import {
   AutodartsToolsTrainingsConfig, AutodartsVariants, SegmentTrainingHits, SegmentTrainingModes, SegmentTrainingSegments, SegmentTrainingThrows, ShanghaiModes, X01BaseScores,
   X01BotLevels, X01BullModes, X01BullOffModes, X01InModes, X01Legs, X01MaxRounds, X01OutModes,
@@ -1279,27 +396,104 @@ import {
 } from "@/utils/trainingStorage";
 import SelectBox from "@/components/SelectBox.vue";
 
-const config = ref<IConfig>();
-const callerConfig = ref<ICallerConfig>();
-const soundsConfig = ref<ISoundsConfig>();
-const trainingsConfig = ref<ITrainingsStore>();
-const streamingModeBackgroundFileSelect = ref() as Ref<HTMLInputElement>;
-const tripleCountArr = [ 15, 16, 17, 18, 19, 20 ];
+// Define feature groups with titles for modals
+const featureGroups = [
+  // Lobbies (Tab 0)
+  {
+    id: "lobbies",
+    tab: 0,
+    features: [
+      { id: "discord-webhooks", title: "Discord Webhooks Settings", component: DiscordWebhooks, hasSettings: true },
+      { id: "auto-start", title: "Auto Start Settings", component: AutoStart, hasSettings: false },
+      { id: "recent-local-players", title: "Recent Local Players Settings", component: RecentLocalPlayers, hasSettings: true },
+      { id: "shuffle-players", title: "Shuffle Players Settings", component: ShufflePlayers, hasSettings: false },
+      { id: "team-lobby", title: "Team Lobby Settings", component: TeamLobby, hasSettings: false },
+    ],
+    settingIds: [ "discord-webhooks", "recent-local-players" ],
+  },
+  // Matches (Tab 1)
+  {
+    id: "matches",
+    tab: 1,
+    features: [
+      { id: "colors", title: "Colors Settings", component: Colors, hasSettings: true },
+      { id: "takeout-notification", title: "Takeout Notification Settings", component: TakeoutNotification, hasSettings: false },
+      { id: "next-player-on-takeout-stuck", title: "Next Player On Takeout Stuck Settings", component: NextPlayerOnTakeoutStuck, hasSettings: true },
+      { id: "automatic-next-leg", title: "Automatic Next Leg Settings", component: AutomaticNextLeg, hasSettings: true },
+      { id: "smaller-scores", title: "Smaller Scores Settings", component: SmallerScores, hasSettings: false },
+      { id: "hide-menu-in-match", title: "Hide Menu In Match Settings", component: HideMenuInMatch, hasSettings: false },
+      { id: "streaming-mode", title: "Streaming Mode Settings", component: StreamingMode, hasSettings: true },
+      { id: "larger-legs-sets", title: "Larger Legs Sets Settings", component: LargerLegsSets, hasSettings: true },
+      { id: "larger-player-names", title: "Larger Player Names Settings", component: LargerPlayerNames, hasSettings: true },
+      { id: "larger-player-match-data", title: "Larger Player Match Data Settings", component: LargerPlayerMatchData, hasSettings: true },
+      { id: "winner-animation", title: "Winner Animation Settings", component: WinnerAnimation, hasSettings: false },
+      { id: "ring", title: "Ring Settings", component: Ring, hasSettings: true },
+      { id: "automatic-fullscreen", title: "Automatic Fullscreen Settings", component: AutomaticFullscreen, hasSettings: false },
+      { id: "zoom", title: "Darts Zoom Settings", component: Zoom, hasSettings: true },
+      { id: "quick-correction", title: "Quick Correction Settings", component: QuickCorrection, hasSettings: false },
+    ],
+    settingIds: [ "colors", "next-player-on-takeout-stuck", "automatic-next-leg", "streaming-mode", "larger-legs-sets", "larger-player-names", "larger-player-match-data", "ring", "automatic-fullscreen", "zoom" ],
+  },
+  // Boards (Tab 2)
+  {
+    id: "boards",
+    tab: 2,
+    features: [
+      { id: "external-boards", title: "External Boards Settings", component: ExternalBoards, hasSettings: false },
+    ],
+    settingIds: [],
+  },
+  // Sounds & Animations (Tab 3)
+  {
+    id: "sounds-animations",
+    tab: 3,
+    features: [
+      { id: "animations", title: "Animations Settings", component: Animations, hasSettings: true },
+      { id: "caller", title: "Caller Settings", component: Caller, hasSettings: true },
+      { id: "sound-fx", title: "Sound FX Settings", component: SoundFx, hasSettings: true },
+    ],
+    settingIds: [ "animations", "caller", "sound-fx" ],
+  },
+];
 
-function setActive(index: number) {
-  callerConfig?.value?.caller.forEach((caller, i) => {
-    caller.isActive = i === index;
+// Tabs component data
+const tabs = ref([ "Lobbies", "Matches", "Boards", "Sounds & Animations" ]);
+const activeSettings = useStorage("adt:active-settings", null);
+const activeTab = useStorage("adt:active-tab", 0);
+const showSettingsModal = ref(false);
+const reloadKey = ref(0);
+
+// Create a debounced function for updating reloadKey
+const debouncedReload = useDebounceFn(() => {
+  // Get the current scroll position before updating reloadKey
+  const scrollContainers = [ document.querySelector("#root > div > div:nth-of-type(2)"), document.querySelector("html") ];
+  const scrollPositions = scrollContainers.map(container => container?.scrollTop || 0);
+
+  // Update reloadKey
+  reloadKey.value++;
+
+  // Restore scroll position after DOM update
+  nextTick(() => {
+    setTimeout(() => {
+      scrollContainers.forEach((container, index) => {
+        if (container) {
+          container.scrollTop = scrollPositions[index];
+        }
+      });
+    }, 250);
   });
-}
+}, 250); // 300ms debounce time
 
-function playCallerSound(index: number) {
-  const caller = callerConfig?.value?.caller[index];
-  let callerServerUrl = caller?.url || "";
-  if (callerServerUrl.at(-1) !== "/") callerServerUrl += "/";
-  const callerFileExt = caller?.fileExt || ".mp3";
-  const random = Math.floor(Math.random() * 180).toString();
-  playPointsSound(callerServerUrl, callerFileExt, random);
-}
+// Initialize config with default values to avoid null issues
+const config = ref<IConfig>(defaultConfig);
+const importFileInput = ref<HTMLInputElement>();
+const trainingsConfig = ref<ITrainingsStore>();
+
+const mounted = useMounted();
+
+// Use the composables
+const { confirmDialog, showConfirmDialog, confirmDialogConfirm, confirmDialogCancel } = useConfirmDialog();
+const { notification, showNotification, hideNotification } = useNotification();
 
 function goBack() {
   window.history.back();
@@ -1307,31 +501,18 @@ function goBack() {
 }
 
 onMounted(async () => {
-  config.value = await AutodartsToolsConfig.getValue();
-  callerConfig.value = await AutodartsToolsCallerConfig.getValue();
-  soundsConfig.value = await AutodartsToolsSoundsConfig.getValue();
+  const loadedConfig = await AutodartsToolsConfig.getValue();
+
   trainingsConfig.value = await AutodartsToolsTrainingsConfig.getValue();
+  if (loadedConfig) {
+    config.value = loadedConfig;
+  }
 });
 
 watch(config, async () => {
-  await AutodartsToolsConfig.setValue({
-    ...JSON.parse(JSON.stringify(defaultConfig)),
-    ...JSON.parse(JSON.stringify(config.value)),
-  });
-}, { deep: true });
-
-watch(callerConfig, async () => {
-  await AutodartsToolsCallerConfig.setValue({
-    ...JSON.parse(JSON.stringify(defaultCallerConfig)),
-    ...JSON.parse(JSON.stringify(callerConfig.value)),
-  });
-}, { deep: true });
-
-watch(soundsConfig, async () => {
-  await AutodartsToolsSoundsConfig.setValue({
-    ...JSON.parse(JSON.stringify(defaultSoundsConfig)),
-    ...JSON.parse(JSON.stringify(soundsConfig.value)),
-  });
+  // Save the config to storage
+  await AutodartsToolsConfig.setValue(toRaw(config.value));
+  debouncedReload();
 }, { deep: true });
 
 watch(trainingsConfig, async () => {
@@ -1341,67 +522,502 @@ watch(trainingsConfig, async () => {
   });
 }, { deep: true });
 
-function handleStreamingModeBackgroundFileSelect() {
-  streamingModeBackgroundFileSelect.value.click();
+// Function to get the title for a setting
+function getSettingTitle(settingId) {
+  for (const group of featureGroups) {
+    const feature = group.features.find(f => f.id === settingId);
+    if (feature) {
+      return feature.title;
+    }
+  }
+  return "Settings";
 }
 
-function handleStreamingModeBackgroundFileSelected() {
-  const file = streamingModeBackgroundFileSelect.value.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    config.value!.streamingMode.image = reader.result as string;
-    console.log(reader.result);
-  };
-  reader.readAsDataURL(file);
-
-  streamingModeBackgroundFileSelect.value.value = "";
+// Function to handle setting changes
+function handleSettingChange() {
+  updateConfig();
 }
 
-function handleStreamingModeBackgroundReset() {
-  config.value!.streamingMode.image = "";
+// Function to get the component for a setting
+function getComponentForSetting(settingId) {
+  for (const group of featureGroups) {
+    const feature = group.features.find(f => f.id === settingId && f.hasSettings);
+    if (feature) {
+      return feature.component;
+    }
+  }
+  return null;
 }
 
-function getSoundConfig(configKey: string, arrIndex?: number): TSoundData | null {
-  let soundConfig = soundsConfig.value![configKey];
-  if (typeof arrIndex === "number") soundConfig = soundConfig[arrIndex];
-  if (!soundConfig) return null;
-  return soundConfig;
+// Function to open settings modal
+function openSettingsModal(settingId) {
+  activeSettings.value = settingId;
+  showSettingsModal.value = true;
 }
 
-function handleSoundUpload(configKey: string, arrIndex?: number) {
-  const soundConfig = getSoundConfig(configKey, arrIndex);
-  if (!soundConfig) return;
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "audio/*";
-  input.onchange = async () => {
-    const file = input.files?.[0];
-    if (!file) return;
-    const fileName = file.name;
-    const reader = new FileReader();
-    reader.onload = () => {
-      soundConfig.data = reader.result as string;
-      soundConfig.info = fileName;
+// Function to close settings modal
+function closeSettingsModal() {
+  showSettingsModal.value = false;
+  setTimeout(() => {
+    activeSettings.value = null;
+  }, 300); // Wait for animation to complete
+}
+
+async function exportSettings() {
+  config.value = await AutodartsToolsConfig.getValue();
+  if (!config.value) return;
+
+  interface ExportData {
+    config: IConfig;
+    exportDate: string;
+    version: string;
+    sounds: {
+      caller: ISound[];
+      soundFx: ISound[];
     };
-    reader.readAsDataURL(file);
+  }
+
+  const exportData: ExportData = {
+    config: config.value,
+    exportDate: new Date().toISOString(),
+    version: "1.0",
+    sounds: {
+      caller: [],
+      soundFx: [],
+    },
   };
-  input.click();
+
+  // Add sounds from IndexedDB if available
+  if (isIndexedDBAvailable()) {
+    try {
+      // Get all sounds from IndexedDB
+      const callerSounds = await getAllCallerSoundsFromIndexedDB();
+      const soundFxSounds = await getAllSoundFxFromIndexedDB();
+
+      if (callerSounds) {
+        // Convert IndexedDB sound format to ISound format
+        exportData.sounds.caller = callerSounds.map(sound => ({
+          name: sound.name,
+          url: "", // Ensure url field exists
+          base64: sound.base64,
+          enabled: true,
+          triggers: [], // Empty triggers array as default
+          soundId: sound.id,
+        }));
+      }
+
+      if (soundFxSounds) {
+        // Convert IndexedDB sound format to ISound format
+        exportData.sounds.soundFx = soundFxSounds.map(sound => ({
+          name: sound.name,
+          url: "", // Ensure url field exists
+          base64: sound.base64,
+          enabled: true,
+          triggers: [], // Empty triggers array as default
+          soundId: sound.id,
+        }));
+      }
+
+      console.log("Autodarts Tools: Loaded sounds for export", {
+        caller: callerSounds?.length || 0,
+        soundFx: soundFxSounds?.length || 0,
+      });
+    } catch (error) {
+      console.error("Autodarts Tools: Error exporting sounds from IndexedDB", error);
+      showNotification("Error exporting sound files", "error");
+    }
+  }
+
+  // Convert to JSON and then to base64
+  const jsonString = JSON.stringify(exportData);
+  const base64String = btoa(encodeURIComponent(jsonString));
+
+  // Create a blob and download it
+  const blob = new Blob([ base64String ], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `autodarts-tools-settings-${new Date().toISOString().split("T")[0]}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-function handleSoundRemove(configKey: string, arrIndex?: number) {
-  const soundConfig = getSoundConfig(configKey, arrIndex);
-  if (!soundConfig) return;
-  soundConfig.info = "";
-  soundConfig.data = "";
+function importSettings() {
+  if (!importFileInput.value) {
+    importFileInput.value = document.createElement("input");
+    importFileInput.value.type = "file";
+    importFileInput.value.accept = ".txt";
+    importFileInput.value.onchange = async (e) => {
+      const file = importFileInput.value?.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const base64String = e.target?.result as string;
+          const jsonString = decodeURIComponent(atob(base64String));
+          const importedData = JSON.parse(jsonString);
+
+          if (!importedData.config) {
+            showNotification("Invalid settings file", "error");
+            return;
+          }
+
+          // Update the config
+          const newConfig = {
+            ...JSON.parse(JSON.stringify(defaultConfig)),
+            ...JSON.parse(JSON.stringify(importedData.config)),
+          };
+
+          // Set the local ref
+          config.value = newConfig;
+
+          // Explicitly save to storage
+          await AutodartsToolsConfig.setValue(newConfig);
+
+          // Import sounds to IndexedDB if available
+          if (importedData.sounds && isIndexedDBAvailable()) {
+            try {
+              // Clear existing sounds first if there are new sounds to import
+              if (importedData.sounds.caller?.length > 0) {
+                await clearCallerSoundsFromIndexedDB();
+              }
+
+              if (importedData.sounds.soundFx?.length > 0) {
+                await clearSoundFxFromIndexedDB();
+              }
+
+              // Import caller sounds
+              let callerImportCount = 0;
+              if (importedData.sounds.caller?.length > 0) {
+                for (const sound of importedData.sounds.caller) {
+                  // Use existing soundId if available instead of creating a new one
+                  const soundId = await saveSoundToIndexedDB(
+                    sound.name,
+                    sound.base64,
+                    sound.soundId || sound.id, // Use existing soundId/id from imported data
+                  );
+                  if (soundId) {
+                    callerImportCount++;
+
+                    // Update the sound in config to reference the soundId
+                    const soundInConfig = newConfig.caller.sounds.find(
+                      s => s.name === sound.name && (!s.soundId || s.soundId === sound.soundId || s.soundId === sound.id),
+                    );
+
+                    if (soundInConfig) {
+                      soundInConfig.soundId = soundId;
+                      soundInConfig.base64 = ""; // Clear base64 data from config
+                    }
+                  }
+                }
+              }
+
+              // Import soundFx sounds
+              let soundFxImportCount = 0;
+              if (importedData.sounds.soundFx?.length > 0) {
+                for (const sound of importedData.sounds.soundFx) {
+                  // Use existing soundId if available instead of creating a new one
+                  const soundId = await saveSoundFxToIndexedDB(
+                    sound.name,
+                    sound.base64,
+                    sound.soundId || sound.id, // Use existing soundId/id from imported data
+                  );
+                  if (soundId) {
+                    soundFxImportCount++;
+
+                    // Update the sound in config to reference the soundId
+                    const soundInConfig = newConfig.soundFx.sounds.find(
+                      s => s.name === sound.name && (!s.soundId || s.soundId === sound.soundId || s.soundId === sound.id),
+                    );
+
+                    if (soundInConfig) {
+                      soundInConfig.soundId = soundId;
+                      soundInConfig.base64 = ""; // Clear base64 data from config
+                    }
+                  }
+                }
+              }
+
+              // Update the config with the updated sounds
+              config.value = newConfig;
+              await AutodartsToolsConfig.setValue(newConfig);
+
+              console.log("Autodarts Tools: Imported sounds", {
+                caller: callerImportCount,
+                soundFx: soundFxImportCount,
+              });
+            } catch (error) {
+              console.error("Autodarts Tools: Error importing sounds to IndexedDB", error);
+              showNotification("Settings imported, but error importing sounds", "error");
+            }
+          }
+
+          showNotification("Settings imported successfully. Page will reload to apply changes...");
+
+          // Reload the page after a short delay to allow the notification to be seen
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } catch (error) {
+          console.error("Failed to import settings:", error);
+          showNotification("Failed to import settings", "error");
+        }
+      };
+      reader.readAsText(file);
+    };
+  }
+  importFileInput.value.click();
 }
 
-function handleSoundReset(configKey: string, arrIndex?: number) {
-  const soundConfig = getSoundConfig(configKey, arrIndex);
-  if (!soundConfig) return;
-  soundConfig.info = defaultSoundsConfig[configKey].info;
-  soundConfig.data = "";
+// State for danger zone
+const showDangerZone = ref(false);
+
+function toggleDangerZone() {
+  showDangerZone.value = !showDangerZone.value;
+}
+
+function resetAllSettings() {
+  showConfirmDialog(
+    "Reset All Settings",
+    "This will reset all settings to their default values. All your customizations will be lost. Are you sure you want to continue?",
+    async () => {
+      // Clear the IndexedDB sound files
+      if (isIndexedDBAvailable()) {
+        try {
+          await clearCallerSoundsFromIndexedDB();
+          await clearSoundFxFromIndexedDB();
+          console.log("Autodarts Tools: IndexedDB sounds cleared");
+        } catch (error) {
+          console.error("Autodarts Tools: Error clearing IndexedDB sounds", error);
+        }
+      }
+
+      config.value = { ...defaultConfig };
+
+      // Explicitly save to storage
+      await AutodartsToolsConfig.setValue(defaultConfig);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      showNotification("All settings have been reset to default. Page will reload to apply changes...");
+
+      // Close danger zone
+      showDangerZone.value = false;
+
+      // Reload the page after a short delay to allow the notification to be seen
+      setTimeout(() => {
+        window.location.reload();
+        // After reload, navigate to first tab
+        activeTab.value = 0;
+      }, 1500);
+    },
+  );
+}
+
+async function copyToClipboard() {
+  config.value = await AutodartsToolsConfig.getValue();
+  if (!config.value) return;
+
+  interface ExportData {
+    config: IConfig;
+    exportDate: string;
+    version: string;
+    sounds: {
+      caller: ISound[];
+      soundFx: ISound[];
+    };
+  }
+
+  const exportData: ExportData = {
+    config: config.value,
+    exportDate: new Date().toISOString(),
+    version: "1.0",
+    sounds: {
+      caller: [],
+      soundFx: [],
+    },
+  };
+
+  // Add sounds from IndexedDB if available
+  if (isIndexedDBAvailable()) {
+    try {
+      // Get all sounds from IndexedDB
+      const callerSounds = await getAllCallerSoundsFromIndexedDB();
+      const soundFxSounds = await getAllSoundFxFromIndexedDB();
+
+      if (callerSounds) {
+        // Convert IndexedDB sound format to ISound format
+        exportData.sounds.caller = callerSounds.map(sound => ({
+          name: sound.name,
+          url: "", // Ensure url field exists
+          base64: sound.base64,
+          enabled: true,
+          triggers: [], // Empty triggers array as default
+          soundId: sound.id,
+        }));
+      }
+
+      if (soundFxSounds) {
+        // Convert IndexedDB sound format to ISound format
+        exportData.sounds.soundFx = soundFxSounds.map(sound => ({
+          name: sound.name,
+          url: "", // Ensure url field exists
+          base64: sound.base64,
+          enabled: true,
+          triggers: [], // Empty triggers array as default
+          soundId: sound.id,
+        }));
+      }
+
+      console.log("Autodarts Tools: Copied sounds to clipboard", {
+        caller: callerSounds?.length || 0,
+        soundFx: soundFxSounds?.length || 0,
+      });
+    } catch (error) {
+      console.error("Autodarts Tools: Error copying sounds from IndexedDB", error);
+      showNotification("Settings copied, but error including sounds", "error");
+    }
+  }
+
+  // Convert to JSON and then to base64
+  const jsonString = JSON.stringify(exportData);
+  const base64String = btoa(encodeURIComponent(jsonString));
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(base64String)
+    .then(() => {
+      showNotification("Settings copied to clipboard");
+    })
+    .catch((err) => {
+      console.error("Failed to copy settings to clipboard:", err);
+      showNotification("Failed to copy settings to clipboard", "error");
+    });
+}
+
+function pasteFromClipboard() {
+  navigator.clipboard.readText()
+    .then(async (text) => {
+      try {
+        const jsonString = decodeURIComponent(atob(text));
+        const importedData = JSON.parse(jsonString);
+
+        if (!importedData.config) {
+          showNotification("Invalid settings data", "error");
+          return;
+        }
+
+        // Update the config
+        const newConfig = {
+          ...JSON.parse(JSON.stringify(defaultConfig)),
+          ...JSON.parse(JSON.stringify(importedData.config)),
+        };
+
+        // Set the local ref
+        config.value = newConfig;
+
+        // Explicitly save to storage
+        await AutodartsToolsConfig.setValue(newConfig);
+
+        // Import sounds to IndexedDB if available
+        if (importedData.sounds && isIndexedDBAvailable()) {
+          try {
+            // Clear existing sounds first if there are new sounds to import
+            if (importedData.sounds.caller?.length > 0) {
+              await clearCallerSoundsFromIndexedDB();
+            }
+
+            if (importedData.sounds.soundFx?.length > 0) {
+              await clearSoundFxFromIndexedDB();
+            }
+
+            // Import caller sounds
+            let callerImportCount = 0;
+            if (importedData.sounds.caller?.length > 0) {
+              for (const sound of importedData.sounds.caller) {
+                // Use existing soundId if available instead of creating a new one
+                const soundId = await saveSoundToIndexedDB(
+                  sound.name,
+                  sound.base64,
+                  sound.soundId || sound.id, // Use existing soundId/id from imported data
+                );
+                if (soundId) {
+                  callerImportCount++;
+
+                  // Update the sound in config to reference the soundId
+                  const soundInConfig = newConfig.caller.sounds.find(
+                    s => s.name === sound.name && (!s.soundId || s.soundId === sound.soundId || s.soundId === sound.id),
+                  );
+
+                  if (soundInConfig) {
+                    soundInConfig.soundId = soundId;
+                    soundInConfig.base64 = ""; // Clear base64 data from config
+                  }
+                }
+              }
+            }
+
+            // Import soundFx sounds
+            let soundFxImportCount = 0;
+            if (importedData.sounds.soundFx?.length > 0) {
+              for (const sound of importedData.sounds.soundFx) {
+                // Use existing soundId if available instead of creating a new one
+                const soundId = await saveSoundFxToIndexedDB(
+                  sound.name,
+                  sound.base64,
+                  sound.soundId || sound.id, // Use existing soundId/id from imported data
+                );
+                if (soundId) {
+                  soundFxImportCount++;
+
+                  // Update the sound in config to reference the soundId
+                  const soundInConfig = newConfig.soundFx.sounds.find(
+                    s => s.name === sound.name && (!s.soundId || s.soundId === sound.soundId || s.soundId === sound.id),
+                  );
+
+                  if (soundInConfig) {
+                    soundInConfig.soundId = soundId;
+                    soundInConfig.base64 = ""; // Clear base64 data from config
+                  }
+                }
+              }
+            }
+
+            // Update the config with the updated sounds
+            config.value = newConfig;
+            await AutodartsToolsConfig.setValue(newConfig);
+
+            console.log("Autodarts Tools: Imported sounds from clipboard", {
+              caller: callerImportCount,
+              soundFx: soundFxImportCount,
+            });
+          } catch (error) {
+            console.error("Autodarts Tools: Error importing sounds from clipboard to IndexedDB", error);
+            showNotification("Settings imported, but error importing sounds", "error");
+          }
+        }
+
+        showNotification("Settings imported successfully. Page will reload to apply changes...");
+
+        // Reload the page after a short delay to allow the notification to be seen
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } catch (error) {
+        console.error("Failed to import settings from clipboard:", error);
+        showNotification("Failed to import settings from clipboard", "error");
+      }
+    })
+    .catch((err) => {
+      console.error("Failed to read from clipboard:", err);
+      showNotification("Failed to read from clipboard", "error");
+    });
+}
+
+async function updateConfig() {
+  config.value = await AutodartsToolsConfig.getValue();
+  debouncedReload();
 }
 
 function onDeleteBots(trainingsIndex: number, gamesIndex: number) {
@@ -1451,10 +1067,17 @@ input[type="color"] {
   -webkit-appearance: none;
   border: none;
 }
+
 input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
 }
+
 input[type="color"]::-webkit-color-swatch {
   border: none;
+}
+
+.gradient-mask-left {
+  mask-image: linear-gradient(to right, transparent 10%, black 60%);
+  -webkit-mask-image: linear-gradient(to right, transparent 10%, black 60%);
 }
 </style>

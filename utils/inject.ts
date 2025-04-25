@@ -1,5 +1,7 @@
+import type { PublicPath } from "wxt/browser";
+
 export async function injectScript(
-  path: string,
+  path: PublicPath,
   options?: { keepInDom?: boolean },
 ): Promise<void> {
   const url = browser.runtime.getURL(path);

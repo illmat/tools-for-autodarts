@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		690403A52D83D00900B31E15 /* images in Resources */ = {isa = PBXBuildFile; fileRef = 690403A42D83CFF600B31E15 /* images */; };
+		690403A62D83D00900B31E15 /* images in Resources */ = {isa = PBXBuildFile; fileRef = 690403A42D83CFF600B31E15 /* images */; };
+		690403AF2D85184A00B31E15 /* websocket-capture.js in Resources */ = {isa = PBXBuildFile; fileRef = 690403AE2D85184A00B31E15 /* websocket-capture.js */; };
+		690403B02D85184A00B31E15 /* websocket-capture.js in Resources */ = {isa = PBXBuildFile; fileRef = 690403AE2D85184A00B31E15 /* websocket-capture.js */; };
+		690403B22D8526AD00B31E15 /* auth-cookie.js in Resources */ = {isa = PBXBuildFile; fileRef = 690403B12D8526AD00B31E15 /* auth-cookie.js */; };
+		690403B32D8526AD00B31E15 /* auth-cookie.js in Resources */ = {isa = PBXBuildFile; fileRef = 690403B12D8526AD00B31E15 /* auth-cookie.js */; };
 		691D3ED52BABD13200CA29AF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691D3ED42BABD13200CA29AF /* AppDelegate.swift */; };
 		691D3ED72BABD13200CA29AF /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691D3ED62BABD13200CA29AF /* SceneDelegate.swift */; };
 		691D3EDA2BABD13200CA29AF /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 691D3ED92BABD13200CA29AF /* Base */; };
@@ -17,8 +23,6 @@
 		691D3EFB2BABD13200CA29AF /* Tools for Autodarts Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 691D3EFA2BABD13200CA29AF /* Tools for Autodarts Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		691D3F012BABD13200CA29AF /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 691D3EC52BABD13100CA29AF /* Base */; };
 		691D3F022BABD13200CA29AF /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 691D3EC52BABD13100CA29AF /* Base */; };
-		691D3F032BABD13200CA29AF /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 691D3EC62BABD13100CA29AF /* Icon.png */; };
-		691D3F042BABD13200CA29AF /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 691D3EC62BABD13100CA29AF /* Icon.png */; };
 		691D3F052BABD13200CA29AF /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 691D3EC72BABD13100CA29AF /* Style.css */; };
 		691D3F062BABD13200CA29AF /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 691D3EC72BABD13100CA29AF /* Style.css */; };
 		691D3F072BABD13200CA29AF /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 691D3EC82BABD13100CA29AF /* Script.js */; };
@@ -37,6 +41,8 @@
 		691D3F292BABD13200CA29AF /* content-scripts in Resources */ = {isa = PBXBuildFile; fileRef = 691D3F212BABD13200CA29AF /* content-scripts */; };
 		691D3F2A2BABD13200CA29AF /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 691D3F222BABD13200CA29AF /* manifest.json */; };
 		691D3F2B2BABD13200CA29AF /* icon in Resources */ = {isa = PBXBuildFile; fileRef = 691D3F232BABD13200CA29AF /* icon */; };
+		6952EA382D8099E200707846 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6952EA372D8099E200707846 /* Icon.png */; };
+		6952EA392D8099E200707846 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6952EA372D8099E200707846 /* Icon.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,8 +88,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		690403A42D83CFF600B31E15 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = "../../.output/safari-mv2/images"; sourceTree = "<group>"; };
+		690403AE2D85184A00B31E15 /* websocket-capture.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = "websocket-capture.js"; path = "../.output/safari-mv2/websocket-capture.js"; sourceTree = SOURCE_ROOT; };
+		690403B12D8526AD00B31E15 /* auth-cookie.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = "auth-cookie.js"; path = "../.output/safari-mv2/auth-cookie.js"; sourceTree = SOURCE_ROOT; };
 		691D3EC52BABD13100CA29AF /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = ../Base.lproj/Main.html; sourceTree = "<group>"; };
-		691D3EC62BABD13100CA29AF /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		691D3EC72BABD13100CA29AF /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
 		691D3EC82BABD13100CA29AF /* Script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Script.js; sourceTree = "<group>"; };
 		691D3EC92BABD13100CA29AF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -109,6 +117,7 @@
 		691D3F212BABD13200CA29AF /* content-scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "content-scripts"; path = "../../.output/safari-mv2/content-scripts"; sourceTree = "<group>"; };
 		691D3F222BABD13200CA29AF /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = "../../.output/safari-mv2/manifest.json"; sourceTree = "<group>"; };
 		691D3F232BABD13200CA29AF /* icon */ = {isa = PBXFileReference; lastKnownFileType = folder; name = icon; path = "../../.output/safari-mv2/icon"; sourceTree = "<group>"; };
+		6952EA372D8099E200707846 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -169,8 +178,8 @@
 		691D3EC32BABD13100CA29AF /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				6952EA372D8099E200707846 /* Icon.png */,
 				691D3EC42BABD13100CA29AF /* Main.html */,
-				691D3EC62BABD13100CA29AF /* Icon.png */,
 				691D3EC72BABD13100CA29AF /* Style.css */,
 				691D3EC82BABD13100CA29AF /* Script.js */,
 			);
@@ -240,6 +249,9 @@
 		691D3F1F2BABD13200CA29AF /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				690403B12D8526AD00B31E15 /* auth-cookie.js */,
+				690403AE2D85184A00B31E15 /* websocket-capture.js */,
+				690403A42D83CFF600B31E15 /* images */,
 				691D3F202BABD13200CA29AF /* background.js */,
 				691D3F212BABD13200CA29AF /* content-scripts */,
 				691D3F222BABD13200CA29AF /* manifest.json */,
@@ -374,12 +386,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				691D3F032BABD13200CA29AF /* Icon.png in Resources */,
 				691D3EDA2BABD13200CA29AF /* Base in Resources */,
 				691D3F012BABD13200CA29AF /* Base in Resources */,
 				691D3F072BABD13200CA29AF /* Script.js in Resources */,
 				691D3F0B2BABD13200CA29AF /* Assets.xcassets in Resources */,
 				691D3EDD2BABD13200CA29AF /* Base in Resources */,
+				6952EA382D8099E200707846 /* Icon.png in Resources */,
 				691D3F052BABD13200CA29AF /* Style.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -388,7 +400,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				691D3F042BABD13200CA29AF /* Icon.png in Resources */,
+				6952EA392D8099E200707846 /* Icon.png in Resources */,
 				691D3F062BABD13200CA29AF /* Style.css in Resources */,
 				691D3EE92BABD13200CA29AF /* Base in Resources */,
 				691D3F082BABD13200CA29AF /* Script.js in Resources */,
@@ -401,10 +413,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				690403A52D83D00900B31E15 /* images in Resources */,
 				691D3F282BABD13200CA29AF /* background.js in Resources */,
 				691D3F2B2BABD13200CA29AF /* icon in Resources */,
 				691D3F2A2BABD13200CA29AF /* manifest.json in Resources */,
 				691D3F292BABD13200CA29AF /* content-scripts in Resources */,
+				690403B32D8526AD00B31E15 /* auth-cookie.js in Resources */,
+				690403B02D85184A00B31E15 /* websocket-capture.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -412,10 +427,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				690403A62D83D00900B31E15 /* images in Resources */,
 				691D3F242BABD13200CA29AF /* background.js in Resources */,
 				691D3F272BABD13200CA29AF /* icon in Resources */,
 				691D3F262BABD13200CA29AF /* manifest.json in Resources */,
 				691D3F252BABD13200CA29AF /* content-scripts in Resources */,
+				690403B22D8526AD00B31E15 /* auth-cookie.js in Resources */,
+				690403AF2D85184A00B31E15 /* websocket-capture.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -626,7 +644,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 75;
 				DEVELOPMENT_TEAM = BXYGXAJ99T;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (Extension)/Info.plist";
@@ -636,9 +654,8 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0.10;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -657,7 +674,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 75;
 				DEVELOPMENT_TEAM = BXYGXAJ99T;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (Extension)/Info.plist";
@@ -667,9 +684,8 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0.10;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -692,7 +708,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 32;
+				CURRENT_PROJECT_VERSION = 78;
 				DEVELOPMENT_TEAM = BXYGXAJ99T;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (App)/Info.plist";
@@ -703,12 +719,12 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.1;
+				MARKETING_VERSION = 2.1.7;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -731,7 +747,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 32;
+				CURRENT_PROJECT_VERSION = 78;
 				DEVELOPMENT_TEAM = BXYGXAJ99T;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (App)/Info.plist";
@@ -742,12 +758,12 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.1;
+				MARKETING_VERSION = 2.1.7;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -836,7 +852,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "macOS (App)/Tools for Autodarts.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 32;
+				CURRENT_PROJECT_VERSION = 78;
 				DEVELOPMENT_TEAM = BXYGXAJ99T;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -849,8 +865,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.5.1;
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
+				MARKETING_VERSION = 2.1.7;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -873,7 +889,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "macOS (App)/Tools for Autodarts.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 32;
+				CURRENT_PROJECT_VERSION = 78;
 				DEVELOPMENT_TEAM = BXYGXAJ99T;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -886,8 +902,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.5.1;
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
+				MARKETING_VERSION = 2.1.7;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,

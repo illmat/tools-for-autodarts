@@ -1,39 +1,63 @@
 <template>
-  <Switch
-    v-model="enabled"
-    :class="enabled ? 'h-8 bg-cyan-600 border border-cyan-600' : 'h-8 bg-white/5 border border-white/10'"
-    class="relative inline-flex size-full w-20 items-center rounded"
+  <div
+    class="relative flex overflow-hidden rounded-md bg-[var(--chakra-colors-whiteAlpha-200)]"
+    :class="{
+      'h-6': props.size === 'xs',
+      'h-8': props.size === 'sm',
+      'h-10': props.size === 'md',
+    }"
   >
-    <span
-      :class="enabled ? 'translate-x-12' : 'translate-x-1.5'"
-      class="inline-block size-6 rounded bg-white transition"
-    />
-    <span
-      :class="enabled ? 'text-sm -translate-x-4' : 'text-sm translate-x-5'"
+    <button
+      @click="setToOn"
+      :class="twMerge(
+        'flex h-full items-center justify-center text-[var(--chakra-colors-whiteAlpha-900)] transition-colors',
+        props.size === 'xs' ? 'px-3 text-xs font-medium'
+        : props.size === 'sm' ? 'px-4 text-sm font-semibold' : 'px-4 font-semibold',
+        props.modelValue
+          ? 'bg-[var(--chakra-colors-whiteAlpha-300)]'
+          : 'enabled:hover:bg-[var(--chakra-colors-whiteAlpha-200)]',
+      )"
     >
-      {{ enabled ? textOn : textOff }}
-    </span>
-  </Switch>
+      On
+    </button>
+    <button
+      @click="setToOff"
+      :class="twMerge(
+        'flex h-full items-center justify-center text-[var(--chakra-colors-whiteAlpha-900)] transition-colors',
+        props.size === 'xs' ? 'px-3 text-xs font-medium'
+        : props.size === 'sm' ? 'px-4 text-sm font-semibold' : 'px-4 font-semibold',
+        !props.modelValue
+          ? 'bg-[var(--chakra-colors-whiteAlpha-300)]'
+          : 'enabled:hover:bg-[var(--chakra-colors-whiteAlpha-200)]',
+      )"
+    >
+      Off
+    </button>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Switch } from "@headlessui/vue";
+import { twMerge } from "tailwind-merge";
 
+// Define props with defaults
 const props = withDefaults(defineProps<{
-  modelValue?: boolean;
-  textOn?: string;
-  textOff?: string;
+  modelValue: boolean;
+  size?: "xs" | "sm" | "md";
 }>(), {
-  modelValue: false,
-  textOn: "ON",
-  textOff: "OFF",
+  size: "md",
 });
 
 const emit = defineEmits([ "update:modelValue" ]);
 
-const enabled = ref(props.modelValue);
+function setToOn() {
+  if (!props.modelValue) {
+    emit("update:modelValue", true);
+  }
+}
 
-watch(enabled, (value) => {
-  emit("update:modelValue", value);
-});
+function setToOff() {
+  if (props.modelValue) {
+    emit("update:modelValue", false);
+  }
+}
 </script>
