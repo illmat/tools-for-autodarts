@@ -2,10 +2,14 @@
   <div v-if="configVisible" id="autodarts-tools-config" class="mx-auto w-full max-w-[1366px] p-4 pr-8 lg:pr-4">
     <PageConfig />
   </div>
+  <template v-if="trainingVisible">
+    <TrainingsInfo />
+  </template>
 </template>
 
 <script setup lang="ts">
 import PageConfig from "@/components/PageConfig.vue";
+import TrainingsInfo from "@/components/TrainingsInfo.vue";
 import { waitForElement } from "@/utils";
 import { AutodartsToolsUrlStatus } from "@/utils/storage";
 
@@ -14,6 +18,7 @@ const menuIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=
 let observer = new MutationObserver(() => {});
 const currentUrl = ref();
 const configVisible = ref(false);
+const trainingVisible = ref(true);
 const isConfigPage = ref(true);
 const navigationCheckInterval = ref();
 const isMobileNav = ref();
